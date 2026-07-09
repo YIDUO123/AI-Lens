@@ -138,18 +138,24 @@ async function WindowReport({ days, label, title, isDaily, variant }: { days: nu
         ))}
       </div>
 
-      {/* 4 个分组 */}
+      {/* 4 个分组 · 每个卡片可滚动查看全部条目 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {catConfig.map((cfg) => {
-          const secItems = groups[cfg.key].slice(0, isDaily ? 4 : 6);
+          const secItems = groups[cfg.key];
           if (secItems.length === 0) return null;
+          const total = secItems.length;
+          const isScrollable = total > 6;
           return (
-            <div key={cfg.key} className="bg-white/72 border border-ink/12 rounded-xl px-4 py-3.5">
-              <div className="flex justify-between items-baseline pb-2.5 mb-2.5 border-b border-dashed border-ink/15">
+            <div key={cfg.key} className="bg-white border-2 border-ink rounded-xl px-4 py-3.5 shadow-brutal-sm">
+              <div className="flex justify-between items-baseline pb-2.5 mb-2.5 border-b-2 border-dashed border-ink/12">
                 <span className="text-xs font-black">{cfg.icon} {cfg.label}</span>
-                <span className="font-mono text-[10px] bg-background px-1.5 py-0.5 rounded text-muted-foreground">{groups[cfg.key].length} 条</span>
+                <span className="font-mono text-[10px] bg-bg-alt px-2 py-0.5 rounded text-muted-foreground border border-line">
+                  {total} 条{isScrollable && ' · 滚动查看'}
+                </span>
               </div>
-              <ul className="space-y-1.5 list-none">
+              <ul
+                className={`space-y-1.5 list-none ${isScrollable ? 'max-h-[280px] overflow-y-auto pr-1 report-scroll' : ''}`}
+              >
                 {secItems.map((it) => (
                   <li key={it.id} className="text-xs leading-relaxed pl-3.5 relative">
                     <span className="absolute left-0 top-2 w-1 h-1 rounded-full bg-coral" />
@@ -164,6 +170,12 @@ async function WindowReport({ days, label, title, isDaily, variant }: { days: nu
           );
         })}
       </div>
+      <style>{`
+        .report-scroll::-webkit-scrollbar { width: 5px; }
+        .report-scroll::-webkit-scrollbar-track { background: rgba(255,107,53,0.05); border-radius: 3px; }
+        .report-scroll::-webkit-scrollbar-thumb { background: rgba(255,107,53,0.35); border-radius: 3px; }
+        .report-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,107,53,0.6); }
+      `}</style>
     </ReportHero>
   );
 }

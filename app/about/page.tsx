@@ -116,33 +116,31 @@ export default async function AboutPage() {
             </p>
           </div>
 
-          {/* 双列布局:左边故事块,右边引言墙 */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
-            <div className="space-y-5">
-              <StoryBlock title="为什么做 AI Lens?">
-                <p>在 AI 行业信息爆炸的当下,绝大多数人都面临同一种困境:每天摄入大量碎片化资讯,却始终难辨价值、难抓核心,看得越多,反而越容易迷失方向、消耗灵感。</p>
-                <p>这也是我最初入门时的真实感受。因此我搭建了 AI Lens,希望以产品经理的视角,对全球 AI 动态做筛选、梳理与拆解,帮大家过滤噪音、高效同步行业进展,持续保持对 AI 领域的认知敏感度与创作灵感。</p>
-                <p>在持续输入的同时,我也会输出独立的产品拆解与行业观点,不止做信息的传递者,更想做思考的同行者,也欢迎每一位读者在这里交流想法、碰撞思路。</p>
-              </StoryBlock>
+          {/* 双列并排:两个故事块并列(响应式:小屏堆叠)*/}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <StoryBlock title="为什么做 AI Lens?">
+              <p>在 AI 行业信息爆炸的当下,绝大多数人都面临同一种困境:每天摄入大量碎片化资讯,却始终难辨价值、难抓核心,看得越多,反而越容易迷失方向、消耗灵感。</p>
+              <p>这也是我最初入门时的真实感受。因此我搭建了 AI Lens,希望以产品经理的视角,对全球 AI 动态做筛选、梳理与拆解,帮大家过滤噪音、高效同步行业进展。</p>
+              <p>在持续输入的同时,我也会输出独立的产品拆解与行业观点,不止做信息的传递者,更想做思考的同行者,也欢迎每一位读者在这里交流想法、碰撞思路。</p>
+            </StoryBlock>
 
-              <StoryBlock title="我希望 AI Lens 成为什么?">
-                <p>短期来看,它是一个能切实解决问题的实用入口 —— 让每一位想了解 AI、深耕 AI 的人,都能在这里高效获取有价值的信息,省下筛选信息的时间,真正有所收获。</p>
-                <p>长期来看,我希望它成长为一个有温度、有思想、有意思的 AI 同好社区。没有冗余的流量噪音,没有空泛的行业套话,大家可以在这里平等交流、深度思考,共同探索 AI 的更多可能性。</p>
-              </StoryBlock>
-            </div>
+            <StoryBlock title="我希望 AI Lens 成为什么?">
+              <p>短期来看,它是一个能切实解决问题的实用入口 —— 让每一位想了解 AI、深耕 AI 的人,都能在这里高效获取有价值的信息,省下筛选信息的时间,真正有所收获。</p>
+              <p>长期来看,我希望它成长为一个有温度、有思想、有意思的 AI 同好社区。没有冗余的流量噪音,没有空泛的行业套话,大家可以在这里平等交流、深度思考,共同探索 AI 的更多可能性。</p>
+            </StoryBlock>
+          </div>
 
-            {/* 右侧:pull quotes + values */}
-            <div className="lg:sticky lg:top-24 lg:self-start space-y-5">
-              <PullQuote author="信念一" quote="信息本身没有价值,能筛出信号的判断力才有。" />
-              <PullQuote author="信念二" quote="不做 AI 生成的口水文,做一个人愿意署名的观点。" />
-              <PullQuote author="信念三" quote="产品的持续力,来自它的运营节奏,不来自它的技术栈。" />
-            </div>
+          {/* 3 条信念 · 底部横排 · 补齐视觉密度 */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <PullQuote author="信念一" quote="信息本身没有价值,能筛出信号的判断力才有。" />
+            <PullQuote author="信念二" quote="不做 AI 生成的口水文,做一个人愿意署名的观点。" />
+            <PullQuote author="信念三" quote="产品的持续力,来自它的运营节奏,不来自它的技术栈。" />
           </div>
         </div>
       </section>
 
       {/* 联系方式 */}
-      <section className="container mb-24">
+      <section className="container mb-16">
         <div className="text-center pt-20 pb-8">
           <div className="text-xs font-black tracking-[3px] uppercase text-coral mb-5">Get in touch · 聊聊</div>
           <h2 className="text-5xl md:text-6xl font-black tracking-[-0.04em] leading-[1.05] mb-5">
@@ -178,6 +176,33 @@ export default async function AboutPage() {
         </div>
       </section>
 
+      {/* 打赏 · 支持独立创作 */}
+      <section className="container mb-24">
+        <div className="max-w-[720px] mx-auto bg-gradient-to-br from-orange-50 to-amber-100 border-2 border-ink rounded-2xl p-8 shadow-brutal relative overflow-hidden">
+          <div className="absolute -top-14 -right-14 w-52 h-52 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.22),transparent_70%)] pointer-events-none" />
+
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-center relative">
+            <div>
+              <div className="text-[11px] font-black tracking-[2px] uppercase text-coral mb-2">☕ Support · 支持独立创作</div>
+              <h3 className="text-2xl font-black tracking-tight mb-2">
+                请我喝杯 <em className="accent">咖啡</em>
+              </h3>
+              <p className="text-sm text-ink-soft leading-relaxed">
+                AI Lens 完全免费,没广告、没付费墙、没数据卖。<br />
+                如果内容让你觉得有价值,欢迎请我喝杯咖啡 —— 一杯可以让我多写一小时。
+              </p>
+            </div>
+
+            <a
+              href="/support"
+              className="inline-flex items-center gap-2 px-5 py-3 bg-coral text-white border-2 border-ink rounded-xl font-bold shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition whitespace-nowrap"
+            >
+              ☕ 打赏支持
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Colophon · 全屏深黑收尾 · 重新设计 */}
       <section className="relative py-24 pb-32 overflow-hidden text-background">
         <div className="absolute inset-0 -mx-[50vw] left-1/2 right-1/2 w-screen bg-ink" />
@@ -203,13 +228,13 @@ export default async function AboutPage() {
             <div>
               <div className="text-[10px] font-black tracking-widest text-coral mb-4">🌊 数据链路</div>
               <div className="space-y-3">
-                <FlowNode label="外部信源" content="aihot · OpenRouter · HackerNews · GitHub" desc="30+ 公开源" />
+                <FlowNode label="外部信源" content="多家 AI 咨询 API · HackerNews · GitHub Trending" desc="30+ 公开源" />
                 <FlowArrow />
-                <FlowNode label="Vercel Cron" content="资讯 30min · 模型 6h · 精选 每日" desc="定时抓取 · 自动去重" accent />
+                <FlowNode label="定时抓取" content="资讯 30min · 模型 6h · 精选 每日" desc="3 条 · 自动去重" accent />
                 <FlowArrow />
                 <FlowNode label="Supabase Postgres" content="15 张表 · Drizzle ORM" desc="结构化存储 · 索引优化" />
                 <FlowArrow />
-                <FlowNode label="Next.js 服务端组件" content="React 19 · 流式渲染 · ISR 60s" desc="Vercel Edge 全球加速" accent />
+                <FlowNode label="Next.js 服务端组件" content="React 19 · 流式渲染 · ISR 60s" desc="Edge Network · 全球加速" accent />
                 <FlowArrow />
                 <FlowNode label="你的浏览器" content="Tailwind + shadcn/ui" desc="首屏 <110 kB · 秒开" />
               </div>
@@ -223,8 +248,8 @@ export default async function AboutPage() {
                 <TechChip icon="🎨" name="Tailwind CSS" desc="+ shadcn/ui 组件库" />
                 <TechChip icon="💾" name="Supabase Postgres" desc="+ Drizzle ORM" />
                 <TechChip icon="🔐" name="better-auth" desc="GitHub OAuth · 邮箱密码" />
-                <TechChip icon="📡" name="Vercel Cron" desc="3 条自动任务" />
-                <TechChip icon="🚀" name="Vercel" desc="Edge · 自动 HTTPS" />
+                <TechChip icon="📡" name="定时任务" desc="3 条自动抓取" />
+                <TechChip icon="🚀" name="Edge 部署" desc="全球 CDN · 自动 HTTPS" />
               </div>
 
               <div className="mt-6 bg-white/[0.04] border border-white/12 rounded-xl p-5 hover:bg-white/[0.07] transition">

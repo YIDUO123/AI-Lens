@@ -21,9 +21,23 @@ export default function HomePage() {
         <AnnoBar />
       </Suspense>
 
-      {/* Hero */}
-      <section className="container py-16 md:py-20">
-        <div className="grid items-center gap-12 lg:gap-16 lg:grid-cols-[1.05fr_1fr] max-w-6xl mx-auto">
+      {/* Hero · 带简约点阵底纹 */}
+      <section className="relative py-16 md:py-20 overflow-hidden">
+        {/* 底纹层:极淡的点阵 + 右上珊瑚光晕 */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.35]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #1a1a1a 1px, transparent 1px)',
+            backgroundSize: '24px 24px',
+            maskImage: 'radial-gradient(ellipse 80% 80% at 50% 40%, black 40%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 40%, black 40%, transparent 100%)',
+          }}
+        />
+        <div className="absolute -top-20 right-[8%] w-96 h-96 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.12),transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-[15%] left-[5%] w-64 h-64 rounded-full bg-[radial-gradient(circle,rgba(47,111,235,0.08),transparent_70%)] pointer-events-none" />
+
+        <div className="container relative">
+          <div className="grid items-center gap-12 lg:gap-16 lg:grid-cols-[1.05fr_1fr] max-w-6xl mx-auto">
           <div>
             <Badge variant="soft" className="mb-6 gap-1.5 rounded-full px-3.5 py-1.5">
               <span className="rounded-full bg-coral px-1.5 py-0.5 text-[10px] font-black text-white">v2.0</span>
@@ -56,6 +70,7 @@ export default function HomePage() {
             <Suspense fallback={<LensSkeleton />}>
               <LensMockup />
             </Suspense>
+          </div>
           </div>
         </div>
       </section>

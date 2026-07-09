@@ -2,6 +2,7 @@
   "crons": [
     { "path": "/api/cron/news",        "schedule": "*/30 * * * *"  },
     { "path": "/api/cron/models",      "schedule": "17 */6 * * *"  },
-    { "path": "/api/cron/daily-picks", "schedule": "13 8 * * *"    }
+    { "path": "/api/cron/daily-picks", "schedule": "13 8 * * *"    },
+    { "path": "/api/cron/archive",     "schedule": "7 3 * * 1"     }
   ]
 }

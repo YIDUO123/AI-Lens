@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { getAllDailyPicks, getAllModels, getPublishedTeardowns } from '@/lib/db/queries';
 import { DailyPicksSection } from '@/components/teardowns/daily-picks-section';
 import { ModelComparison } from '@/components/teardowns/model-comparison';
+import { CollapsibleSection } from '@/components/teardowns/collapsible-section';
 
 export const revalidate = 60;
 
@@ -69,24 +70,34 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
 
           <main className="min-w-0">
             {/* ============ Section 1 · 每日精选 ============ */}
-            <section id="picks" className="mb-16 scroll-mt-24">
-              <SectionHead
-                kicker="Daily VC picks · 创投日报"
-                title={<>10 个创投产品 <em className="accent">灵感速递</em></>}
-                right={<><LiveTag /> 来自 Product Hunt · Hacker News · 编辑手挑<br /><span className="text-muted-foreground text-xs">北美创投圈日更新品(不限 AI)</span></>}
-              />
+            <CollapsibleSection
+              id="picks"
+              storageKey="picks"
+              head={
+                <SectionHead
+                  kicker="Daily VC picks · 创投日报"
+                  title={<>每日创投产品 <em className="accent">灵感速递</em></>}
+                  right={<><LiveTag /> 来自 Product Hunt · Hacker News<br /><span className="text-muted-foreground text-xs">北美创投圈日更新品(不限 AI)</span></>}
+                />
+              }
+            >
               <Suspense fallback={<PicksSkeleton />}>
                 <DailyPicksSection picks={picks} activeCat={picksCat} />
               </Suspense>
-            </section>
+            </CollapsibleSection>
 
             {/* ============ Section 2 · 模型对比 ============ */}
-            <section id="cmp" className="mb-16 scroll-mt-24">
-              <SectionHead
-                kicker="Live comparison · 实时对比"
-                title={<>AI 模型 <em className="accent">能力对比</em></>}
-                right={<><LiveTag /> 价格 / 上下文长度实时更新<br /><span className="text-muted-foreground text-xs">数据更新于 {formatRelative(models[0]?.fetchedAt)}</span></>}
-              />
+            <CollapsibleSection
+              id="cmp"
+              storageKey="cmp"
+              head={
+                <SectionHead
+                  kicker="Live comparison · 实时对比"
+                  title={<>AI 模型 <em className="accent">能力对比</em></>}
+                  right={<><LiveTag /> 价格 / 上下文长度实时更新<br /><span className="text-muted-foreground text-xs">数据更新于 {formatRelative(models[0]?.fetchedAt)}</span></>}
+                />
+              }
+            >
               <Suspense fallback={<CmpSkeleton />}>
                 <ModelComparison models={models} />
               </Suspense>
@@ -108,16 +119,20 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
                   — AI Lens 编辑部 · 2026.07 更新
                 </div>
               </div>
-            </section>
+            </CollapsibleSection>
 
             {/* ============ Section 3 · 深度拆解库 ============ */}
-            <section id="library" className="mb-16 scroll-mt-24">
-              <SectionHead
-                kicker="Deep library · 编辑手写"
-                title={<>深度 <em className="accent">拆解库</em></>}
-                right={<>由 AI Lens 编辑部撰写<br /><span className="text-muted-foreground text-xs">不定期更新 · 支持在 admin 里追加</span></>}
-              />
-
+            <CollapsibleSection
+              id="library"
+              storageKey="library"
+              head={
+                <SectionHead
+                  kicker="Deep library · 编辑手写"
+                  title={<>深度 <em className="accent">拆解库</em></>}
+                  right={<>由 AI Lens 编辑部撰写<br /><span className="text-muted-foreground text-xs">不定期更新 · 支持在 admin 里追加</span></>}
+                />
+              }
+            >
               <div className="flex flex-wrap gap-2 mb-6">
                 {LIB_CATS.map((c) => (
                   <Link
@@ -136,7 +151,7 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
               </div>
 
               <TeardownGrid teardowns={teardowns} activeCat={libCat} />
-            </section>
+            </CollapsibleSection>
 
           </main>
         </div>

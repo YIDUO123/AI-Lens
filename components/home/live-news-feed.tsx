@@ -137,11 +137,6 @@ export function LiveNewsFeed({ items: initial }: { items: any[] }) {
         </div>
       </div>
 
-      {/* Badge */}
-      <div className="absolute -bottom-3 left-8 bg-ink text-background font-serif font-black text-[13px] px-4 py-2.5 rounded-full border-2 border-ink tracking-wide">
-        🔍 <span className="text-coral">Real-time</span> lens
-      </div>
-
       {/* 内联 keyframes */}
       <style jsx global>{`
         @keyframes rollin {

@@ -51,7 +51,8 @@ export async function NewsSidebar({ activeCat, activeTab, activeFam }: { activeC
     params.set('tab', patch.tab ?? activeTab);
     params.set('cat', patch.cat ?? activeCat);
     if (activeFam !== 'all') params.set('fam', activeFam);
-    return `/news?${params.toString()}`;
+    // 点分类时自动跳到 timeline 区(和 "AI 资讯流" 效果一致)
+    return `/news?${params.toString()}#timeline`;
   };
 
   return (
@@ -95,7 +96,6 @@ export async function NewsSidebar({ activeCat, activeTab, activeFam }: { activeC
               <li key={c.key}>
                 <Link
                   href={buildLink({ cat: c.key })}
-                  scroll={false}
                   className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition ${
                     isActive ? 'bg-ink text-background font-bold' : 'text-ink-soft hover:bg-bg-alt hover:text-ink'
                   }`}

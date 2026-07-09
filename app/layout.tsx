@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Nav } from '@/components/nav';
 import { Footer } from '@/components/footer';
+import { DonationBubble } from '@/components/support/donation-bubble';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function RootLayout({
         <Nav />
         <main>{children}</main>
         <Footer />
+        <DonationBubble />
       </body>
     </html>
   );

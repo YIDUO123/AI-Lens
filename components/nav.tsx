@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { UserMenu } from '@/components/auth/user-menu';
+import { LensLogo } from '@/components/lens-logo';
 
 const NAV_ITEMS = [
   { href: '/', label: '首页' },
@@ -19,17 +20,8 @@ export function Nav() {
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between border-b-2 border-ink bg-background px-10 py-4">
-      <Link href="/" className="flex items-center gap-2.5">
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-ink font-serif text-base font-black italic text-white"
-          style={{
-            background: 'linear-gradient(135deg, hsl(var(--coral)) 0%, hsl(var(--gold)) 100%)',
-            transform: 'rotate(-6deg)',
-            boxShadow: '2px 2px 0 hsl(var(--ink))',
-          }}
-        >
-          L
-        </span>
+      <Link href="/" className="flex items-center gap-2">
+        <LensLogo size={52} />
         <span className="text-xl font-black tracking-tight">AI Lens</span>
       </Link>
 
