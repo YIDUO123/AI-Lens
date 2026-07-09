@@ -5,10 +5,16 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export async function GET(req: Request) {
-  const auth = req.headers.get('authorization');
-  const isCron = auth === `Bearer ${process.env.CRON_SECRET}`;
-  const isLocal = req.headers.get('host')?.startsWith('localhost') || req.headers.get('host')?.startsWith('127.');
-  if (!isCron && !isLocal && process.env.NODE_ENV === 'production') {
+  const url = new URL(req.url);
+  const token = url.searchParams.get('token');
+  const authHeader = req.headers.get('authorization');
+  const secret = process.env.CRON_SECRET;
+
+  const isCron = authHeader === `Bearer ${secret}`;
+  const isTokenAuth = secret && token === secret;
+  const isLocal = req.headers.get('host')?.match(/^(localhost|127\.)/);
+
+  if (!isCron && !isTokenAuth && !isLocal && process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 

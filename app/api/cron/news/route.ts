@@ -4,18 +4,22 @@ import { extractAndStoreReleases } from '@/lib/fetchers/releases';
 
 /**
  * GET /api/cron/news
- * Vercel Cron 会 GET 这个 endpoint
- * 也支持手动触发(用于测试和首次 seed)
+ * Vercel Cron 自动触发,或手动带 ?token= 触发
  */
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export async function GET(req: Request) {
-  // 简单的鉴权:Vercel Cron 会带 authorization,或允许手动无认证(便于本地测试)
-  const auth = req.headers.get('authorization');
-  const isCron = auth === `Bearer ${process.env.CRON_SECRET}`;
-  const isLocal = req.headers.get('host')?.startsWith('localhost') || req.headers.get('host')?.startsWith('127.');
-  if (!isCron && !isLocal && process.env.NODE_ENV === 'production') {
+  const url = new URL(req.url);
+  const token = url.searchParams.get('token');
+  const authHeader = req.headers.get('authorization');
+  const secret = process.env.CRON_SECRET;
+
+  const isCron = authHeader === `Bearer ${secret}`;
+  const isTokenAuth = secret && token === secret;
+  const isLocal = req.headers.get('host')?.match(/^(localhost|127\.)/);
+
+  if (!isCron && !isTokenAuth && !isLocal && process.env.NODE_ENV === 'production') {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
