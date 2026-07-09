@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ============================================
+       AI Lens 品牌色(HSL 便于 shadcn/ui 集成)
+       ============================================ */
+    --ink: 0 0% 10%;              /* #1A1A1A */
+    --ink-soft: 0 0% 29%;         /* #4A4A4A */
+    --muted: 32 8% 51%;           /* #8A8378 */
+    --muted-foreground: 32 8% 51%;
+    --cream: 40 100% 98%;         /* #FFFDF7 */
+    --coral: 16 100% 60%;         /* #FF6B35 */
+    --coral-soft: 16 100% 96%;
+    --teal: 178 74% 20%;          /* #0E5C5A */
+    --gold: 43 100% 65%;          /* #FFB84D */
+    --line: 39 38% 86%;           /* #E5DFD3 */
+
+    /* shadcn 系统色 → 映射到品牌 */
+    --background: 33 41% 96%;     /* #FAF6F0 */
+    --foreground: var(--ink);
+    --card: var(--cream);
+    --card-foreground: var(--ink);
+    --primary: var(--ink);
+    --primary-foreground: var(--background);
+    --secondary: 33 25% 92%;
+    --secondary-foreground: var(--ink);
+    --accent: var(--coral);
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: var(--line);
+    --input: var(--line);
+    --ring: var(--coral);
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family:
+      -apple-system, BlinkMacSystemFont, 'Helvetica Neue',
+      'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    line-height: 1.6;
+  }
+  h1, h2, h3, h4 { letter-spacing: -0.02em; }
+  /* italic accent via Georgia serif */
+  em.accent {
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-weight: 700;
+    color: hsl(var(--coral));
+  }
+}
+
+/* Brutal shadow utility */
+@layer utilities {
+  .shadow-brutal-hover {
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .shadow-brutal-hover:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 hsl(var(--ink));
+  }
+}
