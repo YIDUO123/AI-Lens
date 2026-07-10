@@ -1,9 +1,12 @@
 /**
- * Google Gemini Flash · 免费额度 15 RPM · 1500 请求/天 · 1M tokens/天
+ * Google Gemini · 免费额度 · 每天 1500 请求
  * https://aistudio.google.com/app/apikey 获取 API key,存到 Vercel env var GEMINI_API_KEY
  */
 
-const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+// gemini-2.5-flash 是当前推荐的免费旗舰,免费额度最稳
+// 备选:gemini-flash-latest / gemini-2.0-flash / gemini-1.5-flash
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 export async function generateWithGemini(prompt: string, opts?: { temperature?: number; maxTokens?: number }): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -24,7 +27,20 @@ export async function generateWithGemini(prompt: string, opts?: { temperature?: 
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Gemini API 失败: ${res.status} · ${err.slice(0, 200)}`);
+    // 让错误信息对用户更友好
+    if (res.status === 429) {
+      throw new Error(
+        'Gemini 配额限制:请稍等 60 秒后再试。' +
+        '如反复出现,可能是 API key 刚创建还未激活 —— 到 https://aistudio.google.com/app/apikey 确认 key 状态。'
+      );
+    }
+    if (res.status === 400 && err.includes('API key not valid')) {
+      throw new Error('Gemini API key 无效 · 检查 Vercel env 里的 GEMINI_API_KEY 是否正确。');
+    }
+    if (res.status === 404) {
+      throw new Error(`Gemini 模型 "${MODEL}" 不存在 · 试试改 GEMINI_MODEL 为 gemini-flash-latest 或 gemini-2.0-flash`);
+    }
+    throw new Error(`Gemini 失败: ${res.status} · ${err.slice(0, 300)}`);
   }
 
   const data = await res.json();
