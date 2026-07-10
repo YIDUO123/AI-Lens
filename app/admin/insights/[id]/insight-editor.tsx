@@ -10,9 +10,9 @@
 import { useState, useTransition, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Loader2, Save, Send, Trash2, Undo, Bold, Italic, Heading1, Heading2, Link as LinkIcon, Image as ImageIcon, Quote, List, ListOrdered, Code, Star, Eye, Edit3 } from 'lucide-react';
+import { Loader2, Save, Send, Trash2, Undo, Bold, Italic, Heading1, Heading2, Link as LinkIcon, Image as ImageIcon, Quote, List, ListOrdered, Code, Star, Eye, Edit3, Sparkles, Wand2, Upload } from 'lucide-react';
 import { MarkdownContent } from '@/components/content/markdown-content';
-import { updateInsight, publishInsight, unpublishInsight, deleteInsight } from '@/lib/actions/insights';
+import { updateInsight, publishInsight, unpublishInsight, deleteInsight, polishText, generateExcerptFromBody } from '@/lib/actions/insights';
 
 const CATEGORIES = [
   { value: 'thinking',  label: '思考',    color: 'text-purple-700 bg-purple-50 border-purple-200' },
@@ -50,8 +50,12 @@ export function InsightEditor({ article }: { article: Article }) {
   const [tab, setTab] = useState<'edit' | 'preview' | 'split'>('split');
   const [saved, setSaved] = useState(false);
   const [savePending, startSave] = useTransition();
+  const [aiPending, startAI] = useTransition();
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 自动保存(3 秒不改就存一次)
   const [autoSaveTimer, setAutoSaveTimer] = useState<any>(null);
@@ -101,6 +105,113 @@ export function InsightEditor({ article }: { article: Article }) {
       el.focus();
       const pos = lineStart + pre.length + sel.length;
       el.setSelectionRange(pos, pos);
+    });
+  }
+
+  // 在光标处/替换选区插入一段文字
+  function insertAtCursor(text: string, replaceSelection = false) {
+    const el = textareaRef.current;
+    if (!el) { setField('body', form.body + '\n' + text); return; }
+    const s = el.selectionStart;
+    const e = replaceSelection ? el.selectionEnd : s;
+    const next = form.body.slice(0, s) + text + form.body.slice(e);
+    setField('body', next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = s + text.length;
+      el.setSelectionRange(pos, pos);
+    });
+  }
+
+  // ---------------- 图片上传 · 粘贴 / 拖拽 / 点按钮 ----------------
+  async function uploadFile(file: File) {
+    if (!file.type.startsWith('image/')) { setError('只支持图片文件'); return; }
+    setError(null);
+    setUploading(true);
+    const placeholder = `![上传中…](${file.name})`;
+    insertAtCursor(placeholder);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      const md = `![](${data.url})`;
+      // 把 placeholder 换成真 URL
+      setField('body', form.body.replace(placeholder, md).replace(placeholder, md));
+      // 上面那句在闭包里可能拿到旧 form.body,兜底再直接 setForm
+      setForm((f) => ({ ...f, body: f.body.replace(placeholder, md) }));
+      setToast('✓ 图片已上传');
+      setTimeout(() => setToast(null), 2000);
+    } catch (err: any) {
+      setForm((f) => ({ ...f, body: f.body.replace(placeholder, '') }));
+      setError('上传失败:' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      const it = items[i];
+      if (it.kind === 'file' && it.type.startsWith('image/')) {
+        e.preventDefault();
+        const f = it.getAsFile();
+        if (f) uploadFile(f);
+        return;
+      }
+    }
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLTextAreaElement>) {
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+    const imgs = Array.from(files).filter((f) => f.type.startsWith('image/'));
+    if (imgs.length === 0) return;
+    e.preventDefault();
+    imgs.forEach(uploadFile);
+  }
+
+  // ---------------- AI 润色 · 选中文字 → 替换 ----------------
+  function doPolish() {
+    const el = textareaRef.current;
+    if (!el) return;
+    const s = el.selectionStart;
+    const e = el.selectionEnd;
+    if (s === e) { setError('请先在正文里选中一段要润色的文字'); return; }
+    const selected = form.body.slice(s, e);
+    if (selected.length < 5) { setError('选中的文字太短(至少 5 字)'); return; }
+    setError(null);
+    startAI(async () => {
+      try {
+        const { polished } = await polishText(selected);
+        const next = form.body.slice(0, s) + polished + form.body.slice(e);
+        setField('body', next);
+        setToast('✓ AI 润色完成');
+        setTimeout(() => setToast(null), 2000);
+      } catch (err: any) {
+        setError('润色失败:' + err.message);
+      }
+    });
+  }
+
+  // ---------------- AI 生成摘要 ----------------
+  function doGenerateExcerpt() {
+    if (form.body.length < 50) { setError('正文太短 · 至少 50 字'); return; }
+    setError(null);
+    startAI(async () => {
+      try {
+        // 先把正文存进 DB · 再让 AI 读
+        await updateInsight(article.id, { body: form.body });
+        const { excerpt } = await generateExcerptFromBody(article.id);
+        setField('excerpt', excerpt);
+        setToast('✓ 摘要已生成');
+        setTimeout(() => setToast(null), 2000);
+      } catch (err: any) {
+        setError('生成摘要失败:' + err.message);
+      }
     });
   }
 
@@ -194,13 +305,27 @@ export function InsightEditor({ article }: { article: Article }) {
           </div>
         </div>
 
-        <textarea
-          value={form.excerpt}
-          onChange={(e) => setField('excerpt', e.target.value)}
-          placeholder="摘要 · 首页/列表页展示 · 60-100 字"
-          rows={2}
-          className="w-full px-0 py-1 bg-transparent border-0 border-t border-dashed border-line focus:outline-none focus:border-solid focus:border-ink text-sm text-ink-soft italic resize-none"
-        />
+        <div className="border-t border-dashed border-line pt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">摘要 · Excerpt</label>
+            <button
+              type="button"
+              onClick={doGenerateExcerpt}
+              disabled={aiPending}
+              className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold text-coral hover:bg-coral/10 rounded border border-coral/30 hover:border-coral disabled:opacity-50"
+            >
+              {aiPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              AI 一键生成
+            </button>
+          </div>
+          <textarea
+            value={form.excerpt}
+            onChange={(e) => setField('excerpt', e.target.value)}
+            placeholder="首页/列表页展示 · 60-100 字 · 也可以让 AI 帮你写"
+            rows={2}
+            className="w-full px-0 py-1 bg-transparent border-0 focus:outline-none text-sm text-ink-soft italic resize-none"
+          />
+        </div>
 
         <input
           value={form.cover}
@@ -223,6 +348,24 @@ export function InsightEditor({ article }: { article: Article }) {
         <TbBtn onClick={() => prefix('- ', '列表项')} title="无序列表"><List className="w-4 h-4" /></TbBtn>
         <TbBtn onClick={() => prefix('1. ', '列表项')} title="有序列表"><ListOrdered className="w-4 h-4" /></TbBtn>
         <TbBtn onClick={() => wrap('`', '`', '代码')} title="行内代码"><Code className="w-4 h-4" /></TbBtn>
+        <div className="w-px h-5 bg-line mx-1" />
+        <TbBtn onClick={() => fileInputRef.current?.click()} title="上传图片">
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin text-coral" /> : <Upload className="w-4 h-4" />}
+        </TbBtn>
+        <TbBtn onClick={doPolish} title="AI 润色选中段落 · 智谱免费">
+          {aiPending ? <Loader2 className="w-4 h-4 animate-spin text-coral" /> : <Wand2 className="w-4 h-4 text-coral" />}
+        </TbBtn>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) uploadFile(f);
+            e.target.value = '';
+          }}
+        />
 
         <div className="flex-1" />
 
@@ -241,7 +384,10 @@ export function InsightEditor({ article }: { article: Article }) {
               ref={textareaRef}
               value={form.body}
               onChange={(e) => setField('body', e.target.value)}
-              placeholder="用 Markdown 写正文…"
+              onPaste={handlePaste}
+              onDrop={handleDrop}
+              onDragOver={(e) => e.preventDefault()}
+              placeholder="用 Markdown 写正文… · 图片直接粘贴/拖拽 · 选中一段点魔杖让 AI 润色"
               className="w-full min-h-[500px] p-5 font-mono text-[13px] leading-[1.7] bg-transparent border-0 focus:outline-none resize-y"
             />
             <div className="px-5 py-2 border-t border-dashed border-line flex items-center justify-between text-[11px] text-muted-foreground bg-bg-alt/50">
@@ -266,6 +412,7 @@ export function InsightEditor({ article }: { article: Article }) {
 
       {/* 错误/成功提示 */}
       {error && <div className="bg-red-50 border-2 border-red-500 rounded-xl p-3 text-sm text-red-800">⚠️ {error}</div>}
+      {toast && <div className="bg-green-50 border-2 border-green-500 rounded-xl p-3 text-sm text-green-800 flex items-center gap-2"><Sparkles className="w-4 h-4" /> {toast}</div>}
 
       {/* 底部操作栏 */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1 sticky bottom-4 z-10">

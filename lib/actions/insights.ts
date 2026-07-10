@@ -10,6 +10,7 @@ import { db, articles } from '@/db';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { revalidatePath } from 'next/cache';
+import { generateWithAI } from '@/lib/ai/gemini';
 
 async function requireEditor() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -135,4 +136,85 @@ export async function deleteInsight(id: string): Promise<void> {
   await db.delete(articles).where(eq(articles.id, id));
   revalidatePath('/insights');
   revalidatePath('/admin/insights');
+}
+
+// ============================================================
+// AI 润色 · 传入一段选中的文字 · 返回润色后的版本
+// ============================================================
+export async function polishText(input: string): Promise<{ polished: string }> {
+  await requireEditor();
+  const clean = (input || '').trim();
+  if (!clean) throw new Error('没有可润色的内容');
+  if (clean.length > 3000) throw new Error('一次最多润色 3000 字');
+
+  const prompt = `你是资深中文编辑,擅长把粗糙的初稿改得更专业、更清晰、更有节奏。请润色下面这段文字。
+
+要求:
+1. 保留原意 · 不添加新观点 · 不删除关键信息
+2. 让句子更简洁 · 主动句代替被动句 · 去掉废话
+3. 保留原有的 Markdown 语法(粗体 · 链接 · 列表等)
+4. 输出严格的 JSON · 不要 markdown 代码块包裹
+
+原文:
+"""
+${clean}
+"""
+
+请输出:
+{ "polished": "润色后的文字" }`;
+
+  const raw = await generateWithAI(prompt, { temperature: 0.5, maxTokens: 3000 });
+  try {
+    const cleaned = raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+    const parsed = JSON.parse(cleaned);
+    if (!parsed.polished) throw new Error('AI 没返回 polished 字段');
+    return { polished: String(parsed.polished) };
+  } catch {
+    // AI 有时不听话直接返回纯文字,兜底
+    return { polished: raw.trim().replace(/^["']|["']$/g, '') };
+  }
+}
+
+// ============================================================
+// AI 一键生成摘要 · 从正文提炼 60-100 字 excerpt
+// ============================================================
+export async function generateExcerptFromBody(id: string): Promise<{ excerpt: string }> {
+  await requireEditor();
+  const [row] = await db.select().from(articles).where(eq(articles.id, id)).limit(1);
+  if (!row) throw new Error('文章不存在');
+  if (!row.body || row.body.length < 50) throw new Error('正文太短(至少 50 字才能生成摘要)');
+
+  // 只取前 3000 字给 AI 看 · 省 token
+  const bodyForAI = row.body.slice(0, 3000);
+
+  const prompt = `你是资深内容编辑。请为下面这篇 AI 主题的洞察长文写一段 60-100 字的中文摘要,用作首页/列表页的展示文案。
+
+标题:${row.title}
+分类:${row.category}
+
+正文(节选):
+"""
+${bodyForAI}
+"""
+
+要求:
+1. 60-100 字 · 单段 · 不要分段
+2. 陈述文章的核心观点或结论 · 不要"本文将..."这种废话开头
+3. 有钩子感 · 让读者想点开看
+4. 严格输出 JSON:{ "excerpt": "摘要文字" }`;
+
+  const raw = await generateWithAI(prompt, { temperature: 0.6, maxTokens: 500 });
+  try {
+    const cleaned = raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+    const parsed = JSON.parse(cleaned);
+    if (!parsed.excerpt) throw new Error('AI 没返回 excerpt');
+    const excerpt = String(parsed.excerpt).trim();
+    // 顺手写回 DB
+    await db.update(articles).set({ excerpt, updatedAt: new Date() }).where(eq(articles.id, id));
+    return { excerpt };
+  } catch {
+    const excerpt = raw.trim().replace(/^["']|["']$/g, '').slice(0, 200);
+    await db.update(articles).set({ excerpt, updatedAt: new Date() }).where(eq(articles.id, id));
+    return { excerpt };
+  }
 }
