@@ -25,8 +25,14 @@ export const articles = pgTable(
     authorName: text('author_name').notNull().default('AI Lens 编辑部'),
     readTime: integer('read_time').notNull().default(10), // minutes
     featured: boolean('featured').notNull().default(false),
+    isDraft: boolean('is_draft').notNull().default(false),
     viewCount: integer('view_count').notNull().default(0),
     likeCount: integer('like_count').notNull().default(0),
+    // 外部观点(URL 采集器写入的字段, 为 null 表示原创)
+    sourceUrl: text('source_url'),
+    sourceName: text('source_name'),
+    sourceAuthor: text('source_author'),
+    sourceImage: text('source_image'),
     publishedAt: timestamp('published_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

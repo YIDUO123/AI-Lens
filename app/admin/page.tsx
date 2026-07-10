@@ -86,14 +86,15 @@ export default async function AdminPage() {
           <div className="text-[10px] font-black tracking-widest uppercase text-coral mb-2">Content · 内容管理</div>
           <h3 className="text-xl font-black mb-1">编辑站点内容</h3>
           <p className="text-sm text-ink-soft mb-4 leading-relaxed">
-            目前编辑通过 <b>Supabase Table Editor</b> 完成 · 表格化操作 · Batch 16 会补富文本后台。
+            精选补 6 维 · URL 采集器 · 富文本长文 · 全部支持 admin 端操作。
           </p>
 
           <div className="space-y-2">
-            <ContentShortcut label="洞察长文" table="articles" count={a.n} />
-            <ContentShortcut label="产品拆解" table="teardowns" count={t.n} />
-            <ContentShortcut label="迭代版本" table="timeline_versions" count={tv.n} />
-            <ContentShortcut label="每日精选(补 6 维)" table="daily_picks" count={dp.n} />
+            <AdminLink href="/admin/picks"     icon="🌟" label="每日精选编辑器"   badge={`补 6 维 · AI 兜底`} coral />
+            <AdminLink href="/admin/collect"   icon="🔗" label="URL 观点采集器"   badge="外部观点 + 你的评注" />
+            <ContentShortcut label="洞察长文(直改 DB)" table="articles" count={a.n} />
+            <ContentShortcut label="产品拆解(直改 DB)" table="teardowns" count={t.n} />
+            <ContentShortcut label="迭代版本(直改 DB)" table="timeline_versions" count={tv.n} />
           </div>
         </section>
 
@@ -176,6 +177,26 @@ function ContentShortcut({ label, table, count }: { label: string; table: string
         <ArrowRight className="w-3.5 h-3.5" />
       </div>
     </a>
+  );
+}
+
+function AdminLink({ href, icon, label, badge, coral }: { href: string; icon: string; label: string; badge?: string; coral?: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition group ${
+        coral ? 'border-coral bg-coral/5 hover:bg-coral/10' : 'border-line hover:bg-bg-alt'
+      }`}
+    >
+      <div className="flex items-center gap-2.5 min-w-0">
+        <span className="text-lg">{icon}</span>
+        <div className="min-w-0">
+          <div className="text-sm font-bold truncate">{label}</div>
+          {badge && <div className="text-[10px] text-muted-foreground">{badge}</div>}
+        </div>
+      </div>
+      <ArrowRight className={`w-3.5 h-3.5 ${coral ? 'text-coral' : 'text-muted-foreground'} group-hover:translate-x-0.5 transition`} />
+    </Link>
   );
 }
 
