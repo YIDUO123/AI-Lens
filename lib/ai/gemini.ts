@@ -183,7 +183,7 @@ export async function generatePickAnalysis(pick: {
 
 只输出 JSON。`;
 
-  const raw = await generateWithAI(prompt, { temperature: 0.6 });
+  const raw = await generateWithAI(prompt, { temperature: 0.6, maxTokens: 4096 });
   try {
     const cleaned = raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     return JSON.parse(cleaned);
