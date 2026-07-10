@@ -19,6 +19,11 @@ export default async function AdminPage() {
   const user = session.user;
   const role = (user as any).role || 'reader';
 
+  // 只有 admin / editor 能进后台;reader 跳转到个人主页
+  if (role !== 'admin' && role !== 'editor') {
+    redirect('/me');
+  }
+
   // 内容统计
   const [[a], [t], [tv], [dp], [n]] = await Promise.all([
     db.select({ n: sql<number>`count(*)::int` }).from(articles),

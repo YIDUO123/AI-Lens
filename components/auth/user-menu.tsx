@@ -70,8 +70,8 @@ export function UserMenu() {
 
           {/* 菜单 */}
           <div className="py-1">
-            <MenuItem href="/me/saves" icon={<Bookmark className="w-4 h-4" />}>我的收藏</MenuItem>
-            <MenuItem href="/me" icon={<User className="w-4 h-4" />}>个人主页</MenuItem>
+            <MenuItem href="/me" icon={<User className="w-4 h-4" />}>我的主页</MenuItem>
+            <MenuItem href="/me#saves" icon={<Bookmark className="w-4 h-4" />}>我的收藏</MenuItem>
             {(role === 'editor' || role === 'admin') && (
               <MenuItem href="/admin" icon={<Settings className="w-4 h-4" />}>编辑后台</MenuItem>
             )}

@@ -9,7 +9,7 @@ import { Github, Mail, Loader2, ArrowRight } from 'lucide-react';
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/admin';
+  const next = searchParams.get('next') || '/me';   // 默认跳个人主页,admin 会自动被 admin 页跳回 /admin 逻辑接管
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
