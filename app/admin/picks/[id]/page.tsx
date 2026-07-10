@@ -8,6 +8,7 @@ import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { PickEditor } from './pick-editor';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // AI 兜底生成可能要 20-30 秒 · Hobby 免费版上限 60 秒
 
 export default async function AdminPickDetail({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
