@@ -104,10 +104,11 @@ export default async function AboutPage() {
               '每个对比:数据自动 + PM 结论手写',
               '每篇长文:作者 · 日期 · 阅读时长明标',
             ]} />
-            <ManifestoCard num="03" stat="3 条" statLabel="自动化管道" title="更新有节奏" proofs={[
+            <ManifestoCard num="03" stat="4 条" statLabel="自动化管道" title="更新有节奏" proofs={[
               '资讯流 · 每 30 分钟拉 200 条',
               '模型对比 · 每 6 小时刷 22 个',
               '每日精选 · 每日 UTC 08:13 抓 Top 10',
+              '邮件周报 · 每周日 20:00 一封',
             ]} />
           </div>
         </div>
@@ -241,13 +242,13 @@ export default async function AboutPage() {
             <div>
               <div className="text-[10px] font-black tracking-widest text-coral mb-4">🌊 数据链路</div>
               <div className="space-y-3">
-                <FlowNode label="外部信源" content="多家 AI 咨询 API · HackerNews · GitHub Trending" desc="30+ 公开源" />
+                <FlowNode label="外部信源" content="AI 咨询 API · HackerNews · GitHub Trending · Product Hunt" desc="30+ 公开源" />
                 <FlowArrow />
-                <FlowNode label="定时抓取" content="资讯 30min · 模型 6h · 精选 每日" desc="3 条 · 自动去重" accent />
+                <FlowNode label="定时抓取" content="资讯 30min · 模型 6h · 精选每日 · 周报每周" desc="4 条 · 自动去重" accent />
                 <FlowArrow />
-                <FlowNode label="Supabase Postgres" content="15 张表 · Drizzle ORM" desc="结构化存储 · 索引优化" />
+                <FlowNode label="Supabase Postgres" content="16 张表 · Drizzle ORM" desc="结构化存储 · 索引优化" />
                 <FlowArrow />
-                <FlowNode label="Next.js 服务端组件" content="React 19 · 流式渲染 · ISR 60s" desc="Edge Network · 全球加速" accent />
+                <FlowNode label="Next.js 服务端组件" content="React 19 · 流式渲染 · Vercel Data Cache" desc="Edge Network · 全球加速" accent />
                 <FlowArrow />
                 <FlowNode label="你的浏览器" content="Tailwind + shadcn/ui" desc="首屏 <110 kB · 秒开" />
               </div>
@@ -261,15 +262,18 @@ export default async function AboutPage() {
                 <TechChip icon="🎨" name="Tailwind CSS" desc="+ shadcn/ui 组件库" />
                 <TechChip icon="💾" name="Supabase Postgres" desc="+ Drizzle ORM" />
                 <TechChip icon="🔐" name="better-auth" desc="GitHub OAuth · 邮箱密码" />
-                <TechChip icon="📡" name="定时任务" desc="3 条自动抓取" />
-                <TechChip icon="🚀" name="Edge 部署" desc="全球 CDN · 自动 HTTPS" />
+                <TechChip icon="🤖" name="AI 4 通道" desc="DeepSeek · 智谱 · Groq · Gemini" />
+                <TechChip icon="🖼️" name="Vercel Blob" desc="图片上传 · 全球 CDN" />
+                <TechChip icon="📧" name="Resend" desc="每周 Newsletter 发送" />
+                <TechChip icon="⏰" name="GitHub Actions" desc="30 min 高频抓取 · 周报触发" />
               </div>
 
               <div className="mt-6 bg-white/[0.04] border border-white/12 rounded-xl p-5 hover:bg-white/[0.07] transition">
-                <div className="text-[10px] font-black tracking-widest text-coral mb-2">🌱 未来</div>
-                <b className="block text-[15px] font-bold text-background mb-1.5">Batch 15+ · 社区化 · 订阅</b>
+                <div className="text-[10px] font-black tracking-widest text-coral mb-2">🌱 路线图</div>
+                <b className="block text-[15px] font-bold text-background mb-1.5">Batch 21 完 · 站内闭环</b>
                 <p className="text-[13px] text-white/60 leading-relaxed">
-                  真实评论(替代 giscus)· 邮件订阅 · 读者投稿 · 多人协作编辑。持续迭代,不停。
+                  已上线:URL 采集 · AI 兜底填写 · Markdown 编辑器 · 图片粘贴上传 · AI 润色 · 排行榜 · 邮件订阅。<br />
+                  下一步:自定义域名 · 更深的社区讨论 · 移动端优化。
                 </p>
               </div>
             </div>

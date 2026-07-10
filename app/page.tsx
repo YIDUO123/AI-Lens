@@ -96,10 +96,9 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-          <ModuleCard num="01" icon="📰" title="每日 AI 资讯" desc="覆盖模型 · 产品 · 行业 · 论文 · 技巧五类。全球公开信源持续聚合,每 30 分钟自动刷新。" href="/news" cta="200+ 条/天" iconBg="bg-coral" />
-          <ModuleCard num="02" icon="🔍" title="深度产品拆解" desc="像投研报告一样看 AI 产品:定位、用户、模式、亮点、争议。附同类产品横评。" href="/teardowns" cta="9 篇拆解" iconBg="bg-teal" />
-          <ModuleCard num="03" icon="🔄" title="模型代际演化" desc="不追单次版本,追每个 AI 家族的完整弧线 —— OpenAI、Anthropic、Google、Cursor、国内梯队五条时间轴。" href="/timeline" cta="28 代模型" iconBg="bg-gold text-ink" />
-          <ModuleCard num="04" icon="✍️" title="独立洞察专栏" desc="行业思考 · 上手体验 · 方法论。不只是 AI 产品,也谈 PM 如何在 AI 时代重新定义自己。" href="/insights" cta="7 篇长文" iconBg="bg-ink text-background" />
+          <Suspense fallback={<ModulesFallback />}>
+            <ModuleCardsWithCounts />
+          </Suspense>
         </div>
       </section>
 
@@ -166,6 +165,38 @@ function StatsSkeleton() {
     <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
       {[0,1,2,3].map((i) => <div key={i} className="h-32 bg-cream border-2 border-ink/10 rounded-2xl animate-pulse" />)}
     </div>
+  );
+}
+
+// ============================================================
+// 4 大模块 · 动态取真实数量
+// ============================================================
+async function ModuleCardsWithCounts() {
+  const [count, teardowns, articles, famCounts] = await Promise.all([
+    getNewsCount(),
+    getPublishedTeardowns(200),
+    getPublishedArticles(200),
+    getFamilyCounts(),
+  ]);
+  const timelineTotal = Object.values(famCounts).reduce((a: number, b: any) => a + Number(b), 0);
+
+  return (
+    <>
+      <ModuleCard num="01" icon="📰" title="每日 AI 资讯" desc="覆盖模型 · 产品 · 行业 · 论文 · 技巧五类。全球公开信源持续聚合,每 30 分钟自动刷新。" href="/news" cta={`${count || '—'}+ 条`} iconBg="bg-coral" />
+      <ModuleCard num="02" icon="🔍" title="深度产品拆解" desc="像投研报告一样看 AI 产品:定位、用户、模式、亮点、争议。附同类产品横评。" href="/teardowns" cta={`${teardowns.length} 篇拆解`} iconBg="bg-teal" />
+      <ModuleCard num="03" icon="🔄" title="模型代际演化" desc="不追单次版本,追每个 AI 家族的完整弧线 —— OpenAI、Anthropic、Google、Cursor、国内梯队五条时间轴。" href="/timeline" cta={`${timelineTotal || '—'} 代模型`} iconBg="bg-gold text-ink" />
+      <ModuleCard num="04" icon="✍️" title="独立洞察专栏" desc="行业思考 · 上手体验 · 方法论。不只是 AI 产品,也谈 PM 如何在 AI 时代重新定义自己。" href="/insights" cta={`${articles.length} 篇长文`} iconBg="bg-ink text-background" />
+    </>
+  );
+}
+
+function ModulesFallback() {
+  return (
+    <>
+      {[0,1,2,3].map((i) => (
+        <div key={i} className="h-[300px] bg-cream border-2 border-ink/10 rounded-[18px] animate-pulse" />
+      ))}
+    </>
   );
 }
 
