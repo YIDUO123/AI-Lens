@@ -53,12 +53,16 @@ export const getNewsInWindow = unstable_cache(
 // ============================================================
 // Models · 模型对比
 // ============================================================
-export async function getAllModels() {
-  return db
-    .select()
-    .from(models)
-    .orderBy(models.family, models.tier);
-}
+export const getAllModels = unstable_cache(
+  async () => {
+    return db
+      .select()
+      .from(models)
+      .orderBy(models.family, models.tier);
+  },
+  ['all-models'],
+  { revalidate: 600, tags: ['models'] },
+);
 
 export async function getModelById(id: string) {
   const [row] = await db.select().from(models).where(eq(models.id, id));
@@ -104,14 +108,18 @@ export async function getPublishedDailyPicks(limit = 20) {
     .limit(limit);
 }
 
-export async function getAllDailyPicks(limit = 20) {
-  // 展示所有(draft + published),前端可标注 draft
-  return db
-    .select()
-    .from(dailyPicks)
-    .orderBy(desc(dailyPicks.pickedAt))
-    .limit(limit);
-}
+export const getAllDailyPicks = unstable_cache(
+  async (limit = 20) => {
+    // 展示所有(draft + published),前端可标注 draft
+    return db
+      .select()
+      .from(dailyPicks)
+      .orderBy(desc(dailyPicks.pickedAt))
+      .limit(limit);
+  },
+  ['all-daily-picks'],
+  { revalidate: 300, tags: ['picks'] },
+);
 
 export async function getDraftPicks() {
   return db
@@ -214,23 +222,29 @@ export async function getInteractionCounts(targetType: TargetType, targetId: str
 }
 
 /** 批量拿一批 items 的赞数 + 藏数 */
-export async function getInteractionCountsBatch(targetType: TargetType, targetIds: string[]) {
-  if (targetIds.length === 0) return { likes: {}, saves: {} };
-  const [likeRows, saveRows] = await Promise.all([
-    db.select({ tid: likes.targetId, n: sql<number>`count(*)::int` })
-      .from(likes)
-      .where(and(eq(likes.targetType, targetType), inArray(likes.targetId, targetIds)))
-      .groupBy(likes.targetId),
-    db.select({ tid: saves.targetId, n: sql<number>`count(*)::int` })
-      .from(saves)
-      .where(and(eq(saves.targetType, targetType), inArray(saves.targetId, targetIds)))
-      .groupBy(saves.targetId),
-  ]);
-  return {
-    likes: Object.fromEntries(likeRows.map((r) => [r.tid, r.n])),
-    saves: Object.fromEntries(saveRows.map((r) => [r.tid, r.n])),
-  };
-}
+/** 批量拿一批 items 的赞数 + 藏数 · 公共数据 · 短 TTL 缓存
+ *  cache key 由 (targetType, targetIds) 生成 · 相同一批 IDs 会命中 */
+export const getInteractionCountsBatch = unstable_cache(
+  async (targetType: TargetType, targetIds: string[]) => {
+    if (targetIds.length === 0) return { likes: {}, saves: {} };
+    const [likeRows, saveRows] = await Promise.all([
+      db.select({ tid: likes.targetId, n: sql<number>`count(*)::int` })
+        .from(likes)
+        .where(and(eq(likes.targetType, targetType), inArray(likes.targetId, targetIds)))
+        .groupBy(likes.targetId),
+      db.select({ tid: saves.targetId, n: sql<number>`count(*)::int` })
+        .from(saves)
+        .where(and(eq(saves.targetType, targetType), inArray(saves.targetId, targetIds)))
+        .groupBy(saves.targetId),
+    ]);
+    return {
+      likes: Object.fromEntries(likeRows.map((r) => [r.tid, r.n])),
+      saves: Object.fromEntries(saveRows.map((r) => [r.tid, r.n])),
+    };
+  },
+  ['interaction-counts-batch'],
+  { revalidate: 60, tags: ['interactions'] },
+);
 
 /** 拿这个用户对一批 items 的赞/藏状态 */
 export async function getUserInteractions(userId: string, targetType: TargetType, targetIds: string[]) {
