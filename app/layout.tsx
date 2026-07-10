@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Nav } from '@/components/nav';
 import { Footer } from '@/components/footer';
 import { DonationBubble } from '@/components/support/donation-bubble';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 
 const SITE = process.env.BETTER_AUTH_URL || 'https://ai-lens-six.vercel.app';
@@ -118,6 +120,8 @@ export default function RootLayout({
         <main>{children}</main>
         <Footer />
         <DonationBubble />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
