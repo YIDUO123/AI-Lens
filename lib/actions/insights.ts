@@ -87,8 +87,17 @@ export async function updateInsight(
 // ============================================================
 // 发布(草稿 → 正式) · 同步刷新公开路径 slug
 // ============================================================
-export async function publishInsight(id: string): Promise<void> {
+export async function publishInsight(id: string, patch?: Parameters<typeof updateInsight>[1]): Promise<void> {
   await requireEditor();
+
+  // 允许同时接受 patch · 省一次 round trip
+  if (patch) {
+    await db
+      .update(articles)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(articles.id, id));
+  }
+
   const [row] = await db.select().from(articles).where(eq(articles.id, id)).limit(1);
   if (!row) throw new Error('文章不存在');
   if (!row.title?.trim() || row.title === '未命名草稿') throw new Error('请先填标题');

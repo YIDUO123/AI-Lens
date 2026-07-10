@@ -3,7 +3,7 @@ import { Mail, Github } from 'lucide-react';
 import { db, articles, teardowns, timelineVersions } from '@/db';
 import { sql } from 'drizzle-orm';
 
-export const revalidate = 60;
+export const revalidate = 300; // 5 分钟 · 你内容不是分钟级更新的
 
 export default async function AboutPage() {
   // 用真实数据支撑 manifesto 的三个数字

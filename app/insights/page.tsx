@@ -3,7 +3,7 @@ import { db, articles } from '@/db';
 import { desc, eq } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
 
-export const revalidate = 60;
+export const revalidate = 300; // 5 分钟 · 你内容不是分钟级更新的
 
 type SP = { cat?: string };
 

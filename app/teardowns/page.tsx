@@ -7,7 +7,7 @@ import { DailyPicksSection } from '@/components/teardowns/daily-picks-section';
 import { ModelComparison } from '@/components/teardowns/model-comparison';
 import { CollapsibleSection } from '@/components/teardowns/collapsible-section';
 
-export const revalidate = 60;
+export const revalidate = 300; // 5 分钟 · 你内容不是分钟级更新的
 
 type SP = { picks?: string; lib?: string };
 

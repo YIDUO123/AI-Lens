@@ -13,7 +13,7 @@ import {
 import { LiveNewsFeed } from '@/components/home/live-news-feed';
 import { NewsletterForm } from '@/components/newsletter-form';
 
-export const revalidate = 60;
+export const revalidate = 300; // 5 分钟 · 你内容不是分钟级更新的
 
 export default function HomePage() {
   return (

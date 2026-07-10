@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getFamilyTimeline, getFamilyCounts } from '@/lib/db/queries';
 import { Suspense } from 'react';
 
-export const revalidate = 60;
+export const revalidate = 300; // 5 分钟 · 你内容不是分钟级更新的
 
 type SP = { fam?: string };
 

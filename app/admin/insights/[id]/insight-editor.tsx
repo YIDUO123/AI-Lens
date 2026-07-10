@@ -56,21 +56,35 @@ export function InsightEditor({ article }: { article: Article }) {
   const [toast, setToast] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const autoSaveTimerRef = useRef<any>(null);
+  const lastSavedRef = useRef<string>(JSON.stringify(form));
+  const didMountRef = useRef(false);
 
-  // 自动保存(3 秒不改就存一次)
-  const [autoSaveTimer, setAutoSaveTimer] = useState<any>(null);
+  // 自动保存(3 秒不改就存一次 · useRef 版本 · 不触发额外 render)
+  // 挂载时先记录初值 · 只有真的变了才存
   useEffect(() => {
-    if (autoSaveTimer) clearTimeout(autoSaveTimer);
-    const t = setTimeout(() => {
-      updateInsight(article.id, form).then(() => {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      }).catch(() => {});
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    const current = JSON.stringify(form);
+    if (current === lastSavedRef.current) return; // 没变化 · 不存
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      updateInsight(article.id, form)
+        .then(() => {
+          lastSavedRef.current = current;
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        })
+        .catch(() => {});
     }, 3000);
-    setAutoSaveTimer(t);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line
-  }, [form]);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [form, article.id]);
 
   const setField = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -234,8 +248,8 @@ export function InsightEditor({ article }: { article: Article }) {
     if (form.body.length < 20) { setError('正文太短(至少 20 字)'); return; }
     startSave(async () => {
       try {
-        await updateInsight(article.id, form);
-        await publishInsight(article.id);
+        // 一次搞定:传 patch 进 publishInsight · 省 1 次中美 round trip
+        await publishInsight(article.id, form);
         router.push('/admin/insights');
       } catch (e: any) { setError(e.message); }
     });
