@@ -72,7 +72,7 @@ function cleanSource(s: string | null): string {
 }
 
 export async function NewsTimeline({ activeCat }: { activeCat: string }) {
-  const all = await getLatestNews(80);
+  const all = await getLatestNews(50);
   const filtered = activeCat === 'all' ? all : all.filter((n) => mapCatKey(n.category) === activeCat);
 
   if (filtered.length === 0) {
