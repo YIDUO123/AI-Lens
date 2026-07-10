@@ -308,3 +308,60 @@ export async function getComments(targetType: TargetType, targetId: string) {
 
   return rows;
 }
+
+// ============================================================
+// Search · 全站搜索
+// ============================================================
+
+/**
+ * 简易全站搜索:大小写不敏感的模糊匹配
+ * 覆盖 articles / teardowns / daily_picks / news_items
+ */
+export async function searchAll(query: string) {
+  const q = query.trim();
+  if (!q) return { articles: [], teardowns: [], daily_picks: [], news_items: [], total: 0 };
+
+  const pattern = `%${q}%`;
+  const [articleRows, teardownRows, pickRows, newsRows] = await Promise.all([
+    db.select({
+      id: articles.id, slug: articles.slug, title: articles.title,
+      excerpt: articles.excerpt, category: articles.category, publishedAt: articles.publishedAt,
+    }).from(articles)
+      .where(sql`${articles.title} ILIKE ${pattern} OR ${articles.excerpt} ILIKE ${pattern} OR ${articles.body} ILIKE ${pattern}`)
+      .orderBy(desc(articles.publishedAt))
+      .limit(20),
+
+    db.select({
+      id: teardowns.id, slug: teardowns.slug, title: teardowns.title,
+      positioning: teardowns.positioning, category: teardowns.category, publishedAt: teardowns.publishedAt,
+    }).from(teardowns)
+      .where(sql`${teardowns.title} ILIKE ${pattern} OR ${teardowns.positioning} ILIKE ${pattern} OR ${teardowns.body} ILIKE ${pattern}`)
+      .orderBy(desc(teardowns.publishedAt))
+      .limit(20),
+
+    db.select({
+      id: dailyPicks.id, slug: dailyPicks.slug, name: dailyPicks.name,
+      tagline: dailyPicks.tagline, url: dailyPicks.url, category: dailyPicks.category,
+      logo: dailyPicks.logo, logoColor: dailyPicks.logoColor,
+    }).from(dailyPicks)
+      .where(sql`${dailyPicks.name} ILIKE ${pattern} OR ${dailyPicks.tagline} ILIKE ${pattern} OR ${dailyPicks.positioning} ILIKE ${pattern} OR ${dailyPicks.editorTake} ILIKE ${pattern}`)
+      .orderBy(desc(dailyPicks.pickedAt))
+      .limit(20),
+
+    db.select({
+      id: newsItems.id, title: newsItems.title, url: newsItems.url,
+      source: newsItems.source, publishedAt: newsItems.publishedAt, category: newsItems.category,
+    }).from(newsItems)
+      .where(sql`${newsItems.title} ILIKE ${pattern} OR ${newsItems.summary} ILIKE ${pattern}`)
+      .orderBy(desc(newsItems.publishedAt))
+      .limit(30),
+  ]);
+
+  return {
+    articles: articleRows,
+    teardowns: teardownRows,
+    daily_picks: pickRows,
+    news_items: newsRows,
+    total: articleRows.length + teardownRows.length + pickRows.length + newsRows.length,
+  };
+}

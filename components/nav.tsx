@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { UserMenu } from '@/components/auth/user-menu';
 import { LensLogo } from '@/components/lens-logo';
+import { Search } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/', label: '首页' },
@@ -25,7 +26,7 @@ export function Nav() {
         <span className="text-xl font-black tracking-tight">AI Lens</span>
       </Link>
 
-      <div className="flex items-center gap-8">
+      <div className="flex items-center gap-6">
         <ul className="flex gap-8">
           {NAV_ITEMS.map((item) => {
             const isActive =
@@ -47,6 +48,19 @@ export function Nav() {
             );
           })}
         </ul>
+
+        {/* 搜索图标 */}
+        <Link
+          href="/search"
+          aria-label="搜索"
+          className={cn(
+            'p-2 rounded-full border-2 border-line hover:border-ink hover:bg-bg-alt transition',
+            pathname === '/search' && 'border-coral text-coral',
+          )}
+        >
+          <Search className="w-4 h-4" />
+        </Link>
+
         <UserMenu />
       </div>
     </nav>
