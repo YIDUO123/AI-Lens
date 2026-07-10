@@ -1,9 +1,12 @@
 /**
  * 查询辅助函数
  * 服务端组件和 API 都可以用
+ *
+ * ⚡ 公开数据(无用户身份)用 unstable_cache 包装 · 走 Vercel Data Cache · 中国用户切换页面命中率显著提升
  */
 import { db, newsItems, models, releases, dailyPicks, articles, teardowns, timelineVersions, saves, likes, comments, user as userTable } from '@/db';
 import { desc, eq, and, gte, sql, inArray } from 'drizzle-orm';
+import { unstable_cache } from 'next/cache';
 
 // 类型别名
 type TargetType = 'article' | 'teardown' | 'daily_pick' | 'news_item';
@@ -11,29 +14,41 @@ type TargetType = 'article' | 'teardown' | 'daily_pick' | 'news_item';
 // ============================================================
 // News · 资讯
 // ============================================================
-export async function getLatestNews(limit = 20) {
-  return db
-    .select()
-    .from(newsItems)
-    .orderBy(desc(newsItems.publishedAt))
-    .limit(limit);
-}
+export const getLatestNews = unstable_cache(
+  async (limit = 20) => {
+    return db
+      .select()
+      .from(newsItems)
+      .orderBy(desc(newsItems.publishedAt))
+      .limit(limit);
+  },
+  ['latest-news'],
+  { revalidate: 120, tags: ['news'] },
+);
 
-export async function getNewsCount() {
-  const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(newsItems);
-  return row?.count || 0;
-}
+export const getNewsCount = unstable_cache(
+  async () => {
+    const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(newsItems);
+    return row?.count || 0;
+  },
+  ['news-count'],
+  { revalidate: 300, tags: ['news'] },
+);
 
-export async function getNewsInWindow(days: number) {
-  const since = new Date();
-  since.setDate(since.getDate() - days);
-  return db
-    .select()
-    .from(newsItems)
-    .where(gte(newsItems.publishedAt, since))
-    .orderBy(desc(newsItems.publishedAt))
-    .limit(400);
-}
+export const getNewsInWindow = unstable_cache(
+  async (days: number) => {
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+    return db
+      .select()
+      .from(newsItems)
+      .where(gte(newsItems.publishedAt, since))
+      .orderBy(desc(newsItems.publishedAt))
+      .limit(400);
+  },
+  ['news-in-window'],
+  { revalidate: 180, tags: ['news'] },
+);
 
 // ============================================================
 // Models · 模型对比
@@ -53,21 +68,29 @@ export async function getModelById(id: string) {
 // ============================================================
 // Releases · 发布事件
 // ============================================================
-export async function getRecentReleases(limit = 60) {
-  return db
-    .select()
-    .from(releases)
-    .orderBy(desc(releases.publishedAt))
-    .limit(limit);
-}
+export const getRecentReleases = unstable_cache(
+  async (limit = 60) => {
+    return db
+      .select()
+      .from(releases)
+      .orderBy(desc(releases.publishedAt))
+      .limit(limit);
+  },
+  ['recent-releases'],
+  { revalidate: 300, tags: ['releases'] },
+);
 
-export async function getReleaseFamilyStats() {
-  const rows = await db
-    .select({ family: releases.family, count: sql<number>`count(*)::int` })
-    .from(releases)
-    .groupBy(releases.family);
-  return Object.fromEntries(rows.map((r) => [r.family, r.count]));
-}
+export const getReleaseFamilyStats = unstable_cache(
+  async () => {
+    const rows = await db
+      .select({ family: releases.family, count: sql<number>`count(*)::int` })
+      .from(releases)
+      .groupBy(releases.family);
+    return Object.fromEntries(rows.map((r) => [r.family, r.count]));
+  },
+  ['release-family-stats'],
+  { revalidate: 600, tags: ['releases'] },
+);
 
 // ============================================================
 // Daily Picks · 每日精选
@@ -101,23 +124,32 @@ export async function getDraftPicks() {
 // ============================================================
 // Articles · 洞察长文
 // ============================================================
-export async function getPublishedArticles(limit = 20) {
-  return db
-    .select()
-    .from(articles)
-    .orderBy(desc(articles.publishedAt))
-    .limit(limit);
-}
+export const getPublishedArticles = unstable_cache(
+  async (limit = 20) => {
+    return db
+      .select()
+      .from(articles)
+      .where(eq(articles.isDraft, false))
+      .orderBy(desc(articles.publishedAt))
+      .limit(limit);
+  },
+  ['published-articles'],
+  { revalidate: 300, tags: ['articles'] },
+);
 
-export async function getFeaturedArticle() {
-  const [row] = await db
-    .select()
-    .from(articles)
-    .where(eq(articles.featured, true))
-    .orderBy(desc(articles.publishedAt))
-    .limit(1);
-  return row;
-}
+export const getFeaturedArticle = unstable_cache(
+  async () => {
+    const [row] = await db
+      .select()
+      .from(articles)
+      .where(and(eq(articles.featured, true), eq(articles.isDraft, false)))
+      .orderBy(desc(articles.publishedAt))
+      .limit(1);
+    return row;
+  },
+  ['featured-article'],
+  { revalidate: 300, tags: ['articles'] },
+);
 
 export async function getArticleBySlug(slug: string) {
   const [row] = await db.select().from(articles).where(eq(articles.slug, slug));
@@ -127,13 +159,17 @@ export async function getArticleBySlug(slug: string) {
 // ============================================================
 // Teardowns · 深度拆解
 // ============================================================
-export async function getPublishedTeardowns(limit = 20) {
-  return db
-    .select()
-    .from(teardowns)
-    .orderBy(desc(teardowns.publishedAt))
-    .limit(limit);
-}
+export const getPublishedTeardowns = unstable_cache(
+  async (limit = 20) => {
+    return db
+      .select()
+      .from(teardowns)
+      .orderBy(desc(teardowns.publishedAt))
+      .limit(limit);
+  },
+  ['published-teardowns'],
+  { revalidate: 300, tags: ['teardowns'] },
+);
 
 export async function getTeardownBySlug(slug: string) {
   const [row] = await db.select().from(teardowns).where(eq(teardowns.slug, slug));
@@ -151,13 +187,17 @@ export async function getFamilyTimeline(family: string) {
     .orderBy(desc(timelineVersions.dateOrder));
 }
 
-export async function getFamilyCounts() {
-  const rows = await db
-    .select({ family: timelineVersions.family, count: sql<number>`count(*)::int` })
-    .from(timelineVersions)
-    .groupBy(timelineVersions.family);
-  return Object.fromEntries(rows.map((r) => [r.family, r.count]));
-}
+export const getFamilyCounts = unstable_cache(
+  async () => {
+    const rows = await db
+      .select({ family: timelineVersions.family, count: sql<number>`count(*)::int` })
+      .from(timelineVersions)
+      .groupBy(timelineVersions.family);
+    return Object.fromEntries(rows.map((r) => [r.family, r.count]));
+  },
+  ['family-counts'],
+  { revalidate: 600, tags: ['timeline'] },
+);
 
 // ============================================================
 // Interactions · 收藏 / 点赞 / 评论
