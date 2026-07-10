@@ -1,16 +1,49 @@
 /**
  * 统一 AI 生成接口
- * 优先级:GROQ_API_KEY > GEMINI_API_KEY
+ * 优先级:DEEPSEEK_API_KEY > GROQ_API_KEY > GEMINI_API_KEY
  *
- * Groq: 14,400 req/day 免费 · 速度极快 · 稳定
- * Gemini: 1500 req/day 免费 · 中文出色 · Free tier 偶尔 503
+ * DeepSeek: 国产 · 中文出色 · 稳定 · 便宜到白菜价 · 中国区可直接注册
+ * Groq: 14,400 req/day 免费 · 速度极快 · 但注册页对中国 IP blocked (API 从 Vercel 可用)
+ * Gemini: 1500 req/day 免费 · 但 Free tier 常 503 / 429
  */
 
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
+const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/chat/completions';
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 const GEMINI_ENDPOINT = (m: string) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
+
+async function callDeepSeek(prompt: string, opts: { temperature: number; maxTokens: number }): Promise<string> {
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) throw new Error('DEEPSEEK_API_KEY 未配置');
+
+  const res = await fetch(DEEPSEEK_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: opts.temperature,
+      max_tokens: opts.maxTokens,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`DeepSeek ${res.status}: ${err.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  if (!text) throw new Error('DeepSeek 返回为空');
+  return text;
+}
 
 async function callGroq(prompt: string, opts: { temperature: number; maxTokens: number }): Promise<string> {
   const key = process.env.GROQ_API_KEY;
@@ -61,8 +94,8 @@ async function callGemini(prompt: string, opts: { temperature: number; maxTokens
 
   if (!res.ok) {
     const err = await res.text();
-    if (res.status === 503) throw new Error('Gemini 高负载,请稍后再试(建议同时配置 GROQ_API_KEY 自动 fallback)');
-    if (res.status === 429) throw new Error('Gemini 配额限制,请等 60 秒重试');
+    if (res.status === 503) throw new Error('Gemini 高负载(建议同时配 DEEPSEEK_API_KEY 自动 fallback)');
+    if (res.status === 429) throw new Error('Gemini 配额限制,请稍等再试');
     throw new Error(`Gemini ${res.status}: ${err.slice(0, 200)}`);
   }
 
@@ -73,33 +106,33 @@ async function callGemini(prompt: string, opts: { temperature: number; maxTokens
 }
 
 /**
- * 主入口:优先 Groq · Groq 失败自动 fallback 到 Gemini
+ * 主入口:按优先级依次尝试三家 AI 服务
  */
 export async function generateWithAI(prompt: string, opts?: { temperature?: number; maxTokens?: number }): Promise<string> {
   const params = { temperature: opts?.temperature ?? 0.7, maxTokens: opts?.maxTokens ?? 2048 };
+  const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY;
   const hasGroq = !!process.env.GROQ_API_KEY;
   const hasGemini = !!process.env.GEMINI_API_KEY;
 
-  if (!hasGroq && !hasGemini) {
-    throw new Error('未配置 AI 服务 · 请在 Vercel env 设置 GROQ_API_KEY 或 GEMINI_API_KEY');
+  if (!hasDeepSeek && !hasGroq && !hasGemini) {
+    throw new Error('未配置 AI 服务 · 请在 Vercel env 设置 DEEPSEEK_API_KEY / GROQ_API_KEY / GEMINI_API_KEY 中的至少一个');
   }
 
   const errors: string[] = [];
 
+  if (hasDeepSeek) {
+    try { return await callDeepSeek(prompt, params); }
+    catch (e: any) { errors.push('DeepSeek: ' + e.message); }
+  }
+
   if (hasGroq) {
-    try {
-      return await callGroq(prompt, params);
-    } catch (e: any) {
-      errors.push('Groq: ' + e.message);
-    }
+    try { return await callGroq(prompt, params); }
+    catch (e: any) { errors.push('Groq: ' + e.message); }
   }
 
   if (hasGemini) {
-    try {
-      return await callGemini(prompt, params);
-    } catch (e: any) {
-      errors.push('Gemini: ' + e.message);
-    }
+    try { return await callGemini(prompt, params); }
+    catch (e: any) { errors.push('Gemini: ' + e.message); }
   }
 
   throw new Error('所有 AI 服务都失败 · ' + errors.join(' · '));
