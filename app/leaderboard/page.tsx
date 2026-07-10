@@ -8,7 +8,6 @@ import { db, articles, teardowns, dailyPicks, likes, saves, comments } from '@/d
 import { desc, eq, and, sql, inArray } from 'drizzle-orm';
 import { Flame, Eye, MessageCircle, TrendingUp } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // 每小时刷一次
 
 type Row = {

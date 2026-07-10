@@ -159,10 +159,14 @@ export const getFeaturedArticle = unstable_cache(
   { revalidate: 300, tags: ['articles'] },
 );
 
-export async function getArticleBySlug(slug: string) {
-  const [row] = await db.select().from(articles).where(eq(articles.slug, slug));
-  return row;
-}
+export const getArticleBySlug = unstable_cache(
+  async (slug: string) => {
+    const [row] = await db.select().from(articles).where(eq(articles.slug, slug));
+    return row;
+  },
+  ['article-by-slug'],
+  { revalidate: 300, tags: ['articles'] },
+);
 
 // ============================================================
 // Teardowns · 深度拆解
@@ -179,21 +183,29 @@ export const getPublishedTeardowns = unstable_cache(
   { revalidate: 300, tags: ['teardowns'] },
 );
 
-export async function getTeardownBySlug(slug: string) {
-  const [row] = await db.select().from(teardowns).where(eq(teardowns.slug, slug));
-  return row;
-}
+export const getTeardownBySlug = unstable_cache(
+  async (slug: string) => {
+    const [row] = await db.select().from(teardowns).where(eq(teardowns.slug, slug));
+    return row;
+  },
+  ['teardown-by-slug'],
+  { revalidate: 300, tags: ['teardowns'] },
+);
 
 // ============================================================
 // Timeline · 迭代追踪
 // ============================================================
-export async function getFamilyTimeline(family: string) {
-  return db
-    .select()
-    .from(timelineVersions)
-    .where(eq(timelineVersions.family, family))
-    .orderBy(desc(timelineVersions.dateOrder));
-}
+export const getFamilyTimeline = unstable_cache(
+  async (family: string) => {
+    return db
+      .select()
+      .from(timelineVersions)
+      .where(eq(timelineVersions.family, family))
+      .orderBy(desc(timelineVersions.dateOrder));
+  },
+  ['family-timeline'],
+  { revalidate: 600, tags: ['timeline'] },
+);
 
 export const getFamilyCounts = unstable_cache(
   async () => {

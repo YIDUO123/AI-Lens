@@ -1,15 +1,28 @@
 import Link from 'next/link';
 import { Mail, Github } from 'lucide-react';
+import { unstable_cache } from 'next/cache';
 import { db, articles, teardowns, timelineVersions } from '@/db';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 
 export const revalidate = 300; // 5 分钟 · 你内容不是分钟级更新的
 
+// 3 个 count 查询 · 缓存 10 分钟 · 反正是 manifesto 数字, 不追求分钟级新鲜
+const getAboutCounts = unstable_cache(
+  async () => {
+    const [[a], [t], [tv]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)::int` }).from(articles).where(eq(articles.isDraft, false)),
+      db.select({ count: sql<number>`count(*)::int` }).from(teardowns),
+      db.select({ count: sql<number>`count(*)::int` }).from(timelineVersions),
+    ]);
+    return { articleCount: a.count, teardownCount: t.count, timelineCount: tv.count };
+  },
+  ['about-counts'],
+  { revalidate: 600, tags: ['articles', 'teardowns', 'timeline'] },
+);
+
 export default async function AboutPage() {
   // 用真实数据支撑 manifesto 的三个数字
-  const [{ count: articleCount }] = await db.select({ count: sql<number>`count(*)::int` }).from(articles);
-  const [{ count: teardownCount }] = await db.select({ count: sql<number>`count(*)::int` }).from(teardowns);
-  const [{ count: timelineCount }] = await db.select({ count: sql<number>`count(*)::int` }).from(timelineVersions);
+  const { articleCount, teardownCount, timelineCount } = await getAboutCounts();
 
   return (
     <>
