@@ -1,15 +1,11 @@
-/**
- * /me · 读者个人主页
- * 显示个人信息 · 收藏 · 阅读活动
- * (评论 / 订阅是 Batch 16 加)
- */
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import { db, saves, comments } from '@/db';
+import { db, comments } from '@/db';
 import { eq, sql } from 'drizzle-orm';
+import { getUserSaves, getUserLikes } from '@/lib/db/queries';
 import Link from 'next/link';
-import { Bookmark, MessageCircle, User as UserIcon, Settings, LogOut, ArrowRight, Sparkles } from 'lucide-react';
+import { Bookmark, Heart, MessageCircle, Settings, ArrowRight, Sparkles, ExternalLink } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,9 +17,9 @@ export default async function MePage() {
   const role = (user as any).role || 'reader';
   const isEditor = role === 'admin' || role === 'editor';
 
-  // 收藏 & 评论计数
-  const [[savesCount], [commentsCount]] = await Promise.all([
-    db.select({ n: sql<number>`count(*)::int` }).from(saves).where(eq(saves.userId, user.id)),
+  const [savesData, likesData, [commentsCount]] = await Promise.all([
+    getUserSaves(user.id),
+    getUserLikes(user.id),
     db.select({ n: sql<number>`count(*)::int` }).from(comments).where(eq(comments.userId, user.id)),
   ]);
 
@@ -31,7 +27,7 @@ export default async function MePage() {
   const joinedDays = Math.max(1, Math.floor((Date.now() - joinedAt.getTime()) / 86400000));
 
   return (
-    <div className="container max-w-4xl py-12 pb-24">
+    <div className="container max-w-5xl py-12 pb-24">
       {/* Hero */}
       <div className="bg-cream border-2 border-ink rounded-2xl p-8 shadow-brutal mb-8 relative overflow-hidden">
         <div className="absolute -top-14 -right-14 w-52 h-52 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.18),transparent_70%)] pointer-events-none" />
@@ -49,19 +45,14 @@ export default async function MePage() {
             <div className="text-sm text-ink-soft mb-2">{user.email}</div>
             <div className="flex flex-wrap gap-2">
               <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase ${
-                role === 'admin' ? 'bg-coral text-white' :
-                role === 'editor' ? 'bg-gold text-ink' :
-                'bg-bg-alt text-ink-soft'
+                role === 'admin' ? 'bg-coral text-white' : role === 'editor' ? 'bg-gold text-ink' : 'bg-bg-alt text-ink-soft'
               }`}>{role}</span>
               <span className="text-[11px] text-muted-foreground">在这里 {joinedDays} 天</span>
             </div>
           </div>
 
           {isEditor && (
-            <Link
-              href="/admin"
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-ink text-background border-2 border-ink rounded-lg text-sm font-bold shadow-brutal-sm hover:-translate-y-0.5 transition"
-            >
+            <Link href="/admin" className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-ink text-background border-2 border-ink rounded-lg text-sm font-bold shadow-brutal-sm hover:-translate-y-0.5 transition">
               <Settings className="w-4 h-4" /> 编辑后台
             </Link>
           )}
@@ -70,26 +61,38 @@ export default async function MePage() {
 
       {/* 统计 */}
       <div className="grid grid-cols-3 gap-3 mb-8">
-        <StatBox icon={<Bookmark className="w-4 h-4" />} num={savesCount?.n || 0} label="收藏" />
+        <StatBox icon={<Bookmark className="w-4 h-4" />} num={savesData.total} label="收藏" />
+        <StatBox icon={<Heart className="w-4 h-4" />} num={likesData.total} label="点赞" />
         <StatBox icon={<MessageCircle className="w-4 h-4" />} num={commentsCount?.n || 0} label="评论" />
-        <StatBox icon={<Sparkles className="w-4 h-4" />} num={joinedDays} label="访问天数" />
       </div>
 
       {/* 我的收藏 */}
-      <section className="bg-cream border-2 border-ink rounded-2xl p-6 shadow-brutal-sm mb-6">
-        <div className="flex justify-between items-baseline mb-4">
-          <h2 className="text-lg font-black flex items-center gap-2">
-            <Bookmark className="w-5 h-5 text-coral" /> 我的收藏
-          </h2>
-          <span className="text-xs text-muted-foreground">{savesCount?.n || 0} 项</span>
-        </div>
+      <section className="mb-8">
+        <SectionHeader icon="⭐" title="我的收藏" count={savesData.total} kicker="Saved · 采集的灵感" />
 
-        {(savesCount?.n || 0) === 0 ? (
-          <div className="text-center py-8 text-muted-foreground text-sm">
-            还没有收藏 · 在<Link href="/teardowns" className="text-coral font-bold underline mx-1">产品拆解</Link>的每日精选里点"采集灵感"就能收藏
-          </div>
+        {savesData.total === 0 ? (
+          <EmptyState hint="在" linkHref="/teardowns#picks" linkLabel="产品拆解" tail=" 或洞察长文里点收藏,内容会出现在这里。" />
         ) : (
-          <p className="text-sm text-ink-soft">Batch 16 会展示完整收藏列表 · 目前收藏已被记录 ✓</p>
+          <div className="space-y-6">
+            {savesData.daily_picks.length > 0 && <SubGroup title="每日创投精选" items={savesData.daily_picks} kind="daily_pick" />}
+            {savesData.articles.length > 0 && <SubGroup title="洞察长文" items={savesData.articles} kind="article" />}
+            {savesData.teardowns.length > 0 && <SubGroup title="产品拆解" items={savesData.teardowns} kind="teardown" />}
+          </div>
+        )}
+      </section>
+
+      {/* 我的点赞 */}
+      <section className="mb-8">
+        <SectionHeader icon="❤️" title="我的点赞" count={likesData.total} kicker="Liked · 觉得赞的内容" />
+
+        {likesData.total === 0 ? (
+          <EmptyState hint="读到共鸣的内容,点个 ❤️ 就会记录在这里。" linkHref="/insights" linkLabel="从洞察长文开始" tail="" />
+        ) : (
+          <div className="space-y-6">
+            {likesData.articles.length > 0 && <SubGroup title="洞察长文" items={likesData.articles} kind="article" />}
+            {likesData.teardowns.length > 0 && <SubGroup title="产品拆解" items={likesData.teardowns} kind="teardown" />}
+            {likesData.daily_picks.length > 0 && <SubGroup title="每日创投精选" items={likesData.daily_picks} kind="daily_pick" />}
+          </div>
         )}
       </section>
 
@@ -102,7 +105,7 @@ export default async function MePage() {
           <h2 className="text-2xl font-black mb-1">今天有什么值得看?</h2>
           <p className="text-sm text-white/60 mb-5">从这几个入口开始</p>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <ExploreLink href="/news" label="AI 资讯" desc="今日精选" />
             <ExploreLink href="/teardowns#picks" label="每日创投" desc="6 维分析" />
             <ExploreLink href="/insights" label="洞察长文" desc="PM 视角" />
@@ -124,12 +127,73 @@ function StatBox({ icon, num, label }: { icon: React.ReactNode; num: number; lab
   );
 }
 
+function SectionHeader({ icon, title, count, kicker }: { icon: string; title: string; count: number; kicker: string }) {
+  return (
+    <div className="flex justify-between items-baseline mb-4 pb-3 border-b-2 border-dashed border-line">
+      <div>
+        <div className="text-[10px] font-black tracking-widest uppercase text-coral mb-1">{kicker}</div>
+        <h2 className="text-xl font-black flex items-center gap-2">
+          <span>{icon}</span> {title}
+          <span className="text-sm font-mono font-normal text-muted-foreground bg-bg-alt px-2 py-0.5 rounded">{count}</span>
+        </h2>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ hint, linkHref, linkLabel, tail }: { hint: string; linkHref: string; linkLabel: string; tail: string }) {
+  return (
+    <div className="text-center py-10 bg-bg-alt/50 border-2 border-dashed border-line rounded-xl">
+      <p className="text-sm text-ink-soft">
+        {hint}
+        <Link href={linkHref} className="text-coral font-bold underline mx-1">{linkLabel}</Link>
+        {tail}
+      </p>
+    </div>
+  );
+}
+
+function SubGroup({ title, items, kind }: { title: string; items: any[]; kind: 'article' | 'teardown' | 'daily_pick' }) {
+  return (
+    <div>
+      <h3 className="text-xs font-black tracking-widest uppercase text-ink-soft mb-2.5">{title} · {items.length}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {items.map((it) => <SaveCard key={it.id} it={it} kind={kind} />)}
+      </div>
+    </div>
+  );
+}
+
+function SaveCard({ it, kind }: { it: any; kind: 'article' | 'teardown' | 'daily_pick' }) {
+  if (kind === 'daily_pick') {
+    return (
+      <a href={it.url || '#'} target="_blank" rel="noopener noreferrer" className="bg-cream border-2 border-ink rounded-xl p-4 flex gap-3 items-center hover:-translate-y-0.5 transition shadow-brutal-sm">
+        <div className="w-11 h-11 rounded-lg grid place-items-center text-lg text-white border-2 border-ink flex-shrink-0" style={{ background: it.logoColor || '#1a1a1a' }}>
+          {it.logo || '🚀'}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="font-bold text-sm truncate">{it.name}</div>
+          <div className="text-xs text-ink-soft line-clamp-1">{it.tagline}</div>
+        </div>
+        <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+      </a>
+    );
+  }
+  const href = kind === 'article' ? `/insights/${it.slug}` : `/teardowns/${it.slug}`;
+  return (
+    <Link href={href} className="bg-cream border-2 border-ink rounded-xl p-4 flex gap-3 items-center hover:-translate-y-0.5 transition shadow-brutal-sm">
+      <div className="min-w-0 flex-1">
+        <div className="font-bold text-sm mb-0.5 line-clamp-1">{it.title}</div>
+        <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{it.category}</div>
+      </div>
+      <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+    </Link>
+  );
+}
+
 function ExploreLink({ href, label, desc }: { href: string; label: string; desc: string }) {
   return (
-    <Link
-      href={href}
-      className="flex items-center justify-between px-4 py-3 bg-white/5 border border-white/15 rounded-lg hover:bg-white/10 hover:border-coral transition"
-    >
+    <Link href={href} className="flex items-center justify-between px-4 py-3 bg-white/5 border border-white/15 rounded-lg hover:bg-white/10 hover:border-coral transition">
       <div>
         <div className="text-sm font-bold">{label}</div>
         <div className="text-[10px] text-white/50">{desc}</div>

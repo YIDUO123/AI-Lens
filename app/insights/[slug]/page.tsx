@@ -1,9 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getArticleBySlug } from '@/lib/db/queries';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { getArticleBySlug, getInteractionCounts, getUserInteractionForItem, getComments } from '@/lib/db/queries';
 import { MarkdownContent } from '@/components/content/markdown-content';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
+import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
+import { CommentsSection } from '@/components/interactions/comments-section';
 
 export const revalidate = 60;
 
@@ -18,6 +22,16 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
+
+  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUserId = session?.user?.id || null;
+  const isAdmin = ((session?.user as any)?.role || 'reader') === 'admin';
+
+  const [counts, userState, commentList] = await Promise.all([
+    getInteractionCounts('article', article.id),
+    currentUserId ? getUserInteractionForItem(currentUserId, 'article', article.id) : Promise.resolve({ liked: false, saved: false }),
+    getComments('article', article.id),
+  ]);
 
   const catInfo = CAT_MAP[article.category] || CAT_MAP.thinking;
 
@@ -34,8 +48,28 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
           {article.title}
         </h1>
 
-        <div className="text-sm text-muted-foreground pb-6 border-b-2 border-dashed border-line mb-8">
-          {formatDate(article.publishedAt)} · {article.readTime} 分钟阅读 · {article.authorName}
+        <div className="flex justify-between items-center text-sm text-muted-foreground pb-4 border-b-2 border-dashed border-line mb-8 flex-wrap gap-3">
+          <span>{formatDate(article.publishedAt)} · {article.readTime} 分钟阅读 · {article.authorName}</span>
+          <div className="flex items-center gap-2">
+            <LikeButton
+              targetType="article"
+              targetId={article.id}
+              initialLiked={userState.liked}
+              likeCount={counts.likes}
+              isLoggedIn={!!currentUserId}
+              size="sm"
+              showCount
+            />
+            <SaveButton
+              targetType="article"
+              targetId={article.id}
+              initialSaved={userState.saved}
+              saveCount={counts.saves}
+              isLoggedIn={!!currentUserId}
+              size="sm"
+              showCount
+            />
+          </div>
         </div>
 
         <MarkdownContent>{article.body}</MarkdownContent>
@@ -43,15 +77,35 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
         <div className="mt-12 pt-6 border-t border-dashed border-line text-sm text-muted-foreground text-center">
           — {article.authorName} · {formatDate(article.publishedAt)}
         </div>
-      </article>
 
-      {/* 评论占位 · Batch 15 加 giscus 或自建 */}
-      <section className="mt-8 rounded-2xl border-2 border-dashed border-line bg-cream/50 p-10 text-center">
-        <div className="text-xs font-black tracking-widest text-coral mb-2">💬 读者讨论(即将上线)</div>
-        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-          评论系统已就绪(comments 表已建),接下来一个 batch 会在这里挂上真实评论组件,支持登录用户发言 + 树形回复。
-        </p>
-      </section>
+        {/* 底部再来一组交互按钮,阅读完后好点 */}
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <LikeButton
+            targetType="article"
+            targetId={article.id}
+            initialLiked={userState.liked}
+            likeCount={counts.likes}
+            isLoggedIn={!!currentUserId}
+            showCount
+          />
+          <SaveButton
+            targetType="article"
+            targetId={article.id}
+            initialSaved={userState.saved}
+            saveCount={counts.saves}
+            isLoggedIn={!!currentUserId}
+          />
+        </div>
+
+        {/* 评论 */}
+        <CommentsSection
+          targetType="article"
+          targetId={article.id}
+          comments={commentList as any}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+        />
+      </article>
     </div>
   );
 }

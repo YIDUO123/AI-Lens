@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { getAllDailyPicks, getAllModels, getPublishedTeardowns } from '@/lib/db/queries';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { getAllDailyPicks, getAllModels, getPublishedTeardowns, getInteractionCountsBatch, getUserInteractions } from '@/lib/db/queries';
 import { DailyPicksSection } from '@/components/teardowns/daily-picks-section';
 import { ModelComparison } from '@/components/teardowns/model-comparison';
 import { CollapsibleSection } from '@/components/teardowns/collapsible-section';
@@ -23,10 +25,22 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
   const picksCat = sp.picks || 'all';
   const libCat = sp.lib || 'all';
 
-  const [picks, models, teardowns] = await Promise.all([
+  const [picks, models, teardowns, session] = await Promise.all([
     getAllDailyPicks(30),
     getAllModels(),
     getPublishedTeardowns(30),
+    auth.api.getSession({ headers: await headers() }),
+  ]);
+  const currentUserId = session?.user?.id || null;
+
+  // 批量查赞/藏数(所有 picks + teardowns 都要)
+  const pickIds = picks.map((p) => p.id);
+  const teardownIds = teardowns.map((t) => t.id);
+  const [pickCounts, teardownCounts, pickUserState, teardownUserState] = await Promise.all([
+    getInteractionCountsBatch('daily_pick', pickIds),
+    getInteractionCountsBatch('teardown', teardownIds),
+    currentUserId ? getUserInteractions(currentUserId, 'daily_pick', pickIds) : Promise.resolve({ likedIds: new Set<string>(), savedIds: new Set<string>() }),
+    currentUserId ? getUserInteractions(currentUserId, 'teardown', teardownIds) : Promise.resolve({ likedIds: new Set<string>(), savedIds: new Set<string>() }),
   ]);
 
   return (
@@ -82,7 +96,15 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
               }
             >
               <Suspense fallback={<PicksSkeleton />}>
-                <DailyPicksSection picks={picks} activeCat={picksCat} />
+                <DailyPicksSection
+                  picks={picks}
+                  activeCat={picksCat}
+                  currentUserId={currentUserId}
+                  likeCounts={pickCounts.likes}
+                  saveCounts={pickCounts.saves}
+                  userLikedIds={Array.from(pickUserState.likedIds)}
+                  userSavedIds={Array.from(pickUserState.savedIds)}
+                />
               </Suspense>
             </CollapsibleSection>
 
@@ -150,7 +172,15 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
                 ))}
               </div>
 
-              <TeardownGrid teardowns={teardowns} activeCat={libCat} />
+              <TeardownGrid
+                teardowns={teardowns}
+                activeCat={libCat}
+                currentUserId={currentUserId}
+                likeCounts={teardownCounts.likes}
+                saveCounts={teardownCounts.saves}
+                userLikedIds={Array.from(teardownUserState.likedIds)}
+                userSavedIds={Array.from(teardownUserState.savedIds)}
+              />
             </CollapsibleSection>
 
           </main>
@@ -199,14 +229,31 @@ function LiveTag() {
   );
 }
 
-function TeardownGrid({ teardowns, activeCat }: { teardowns: any[]; activeCat: string }) {
+function TeardownGrid({
+  teardowns, activeCat, likeCounts, saveCounts,
+}: {
+  teardowns: any[];
+  activeCat: string;
+  currentUserId: string | null;
+  likeCounts: Record<string, number>;
+  saveCounts: Record<string, number>;
+  userLikedIds: string[];
+  userSavedIds: string[];
+}) {
   const filtered = teardowns.filter((t) => {
     if (activeCat === 'all') return true;
     if (activeCat === 'domestic') return t.isDomestic;
     return t.category === activeCat;
   });
 
-  if (filtered.length === 0) {
+  // 按赞数降序 + 时间保底
+  const sorted = [...filtered].sort((a, b) => {
+    const diff = (likeCounts[b.id] || 0) - (likeCounts[a.id] || 0);
+    if (diff !== 0) return diff;
+    return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+  });
+
+  if (sorted.length === 0) {
     return <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-line rounded-xl">该分类下暂无拆解</div>;
   }
 
@@ -216,28 +263,40 @@ function TeardownGrid({ teardowns, activeCat }: { teardowns: any[]; activeCat: s
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      {filtered.map((t, i) => (
-        <Link
-          key={t.id}
-          href={`/teardowns/${t.slug}`}
-          className="bg-cream border-2 border-ink rounded-2xl p-6 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition flex flex-col min-h-[280px]"
-        >
-          <div className="font-serif text-3xl font-black text-bg-alt leading-none mb-3">
-            {String(i + 1).padStart(2, '0')}
-          </div>
-          <div className="inline-block self-start px-2 py-1 text-[10px] font-black tracking-widest uppercase bg-bg-alt text-ink rounded mb-3">
-            {t.isDomestic ? '🇨🇳 国内 · ' : ''}{catLabelMap[t.category] || t.category}
-          </div>
-          <h3 className="text-lg font-bold tracking-tight mb-2 leading-snug">
-            <em className="accent">{t.title.split(' · ')[0]}</em>{t.title.includes(' · ') ? ' · ' + t.title.split(' · ').slice(1).join(' · ') : ''}
-          </h3>
-          <p className="text-sm text-ink-soft leading-relaxed flex-1 mb-3">{t.positioning}</p>
-          <div className="mt-auto pt-3 border-t border-dashed border-line flex justify-between items-center text-[11px] text-muted-foreground">
-            <span>{formatDate(t.publishedAt)} · {t.readTime} 分钟</span>
-            <span className="font-bold text-ink">读拆解 →</span>
-          </div>
-        </Link>
-      ))}
+      {sorted.map((t, i) => {
+        const likes = likeCounts[t.id] || 0;
+        const saves = saveCounts[t.id] || 0;
+        return (
+          <Link
+            key={t.id}
+            href={`/teardowns/${t.slug}`}
+            className="bg-cream border-2 border-ink rounded-2xl p-6 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition flex flex-col min-h-[280px]"
+          >
+            <div className="flex items-baseline justify-between mb-3">
+              <div className="font-serif text-3xl font-black text-bg-alt leading-none">
+                {String(i + 1).padStart(2, '0')}
+              </div>
+              {(likes > 0 || saves > 0) && (
+                <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-mono">
+                  {likes > 0 && <span>❤️ {likes}</span>}
+                  {saves > 0 && <span>⭐ {saves}</span>}
+                </div>
+              )}
+            </div>
+            <div className="inline-block self-start px-2 py-1 text-[10px] font-black tracking-widest uppercase bg-bg-alt text-ink rounded mb-3">
+              {t.isDomestic ? '🇨🇳 国内 · ' : ''}{catLabelMap[t.category] || t.category}
+            </div>
+            <h3 className="text-lg font-bold tracking-tight mb-2 leading-snug">
+              <em className="accent">{t.title.split(' · ')[0]}</em>{t.title.includes(' · ') ? ' · ' + t.title.split(' · ').slice(1).join(' · ') : ''}
+            </h3>
+            <p className="text-sm text-ink-soft leading-relaxed flex-1 mb-3">{t.positioning}</p>
+            <div className="mt-auto pt-3 border-t border-dashed border-line flex justify-between items-center text-[11px] text-muted-foreground">
+              <span>{formatDate(t.publishedAt)} · {t.readTime} 分钟</span>
+              <span className="font-bold text-ink">读拆解 →</span>
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }

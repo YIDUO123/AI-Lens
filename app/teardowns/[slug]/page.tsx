@@ -1,9 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getTeardownBySlug } from '@/lib/db/queries';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { getTeardownBySlug, getInteractionCounts, getUserInteractionForItem, getComments } from '@/lib/db/queries';
 import { MarkdownContent } from '@/components/content/markdown-content';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
+import { CommentsSection } from '@/components/interactions/comments-section';
 
 export const revalidate = 60;
 
@@ -18,6 +22,16 @@ export default async function TeardownDetail({ params }: { params: Promise<{ slu
   const { slug } = await params;
   const t = await getTeardownBySlug(slug);
   if (!t) notFound();
+
+  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUserId = session?.user?.id || null;
+  const isAdmin = ((session?.user as any)?.role || 'reader') === 'admin';
+
+  const [counts, userState, commentList] = await Promise.all([
+    getInteractionCounts('teardown', t.id),
+    currentUserId ? getUserInteractionForItem(currentUserId, 'teardown', t.id) : Promise.resolve({ liked: false, saved: false }),
+    getComments('teardown', t.id),
+  ]);
 
   return (
     <div className="container max-w-3xl py-10 pb-20">
@@ -39,13 +53,17 @@ export default async function TeardownDetail({ params }: { params: Promise<{ slu
           <p className="text-lg text-ink-soft leading-relaxed mb-4">{t.positioning}</p>
         )}
 
-        <div className="flex justify-between items-center text-sm text-muted-foreground pb-6 border-b-2 border-dashed border-line mb-8 flex-wrap gap-3">
-          <span>{formatDate(t.publishedAt)} · {t.readTime} 分钟阅读 · {t.authorName}</span>
-          {t.productUrl && (
-            <a href={t.productUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-coral text-white rounded-lg font-bold text-sm hover:opacity-90 transition">
-              <ExternalLink className="w-3.5 h-3.5" /> 访问官网
-            </a>
-          )}
+        <div className="flex justify-between items-center text-sm text-muted-foreground pb-4 border-b-2 border-dashed border-line mb-8 flex-wrap gap-3">
+          <span>{formatDate(t.publishedAt)} · {t.readTime} 分钟 · {t.authorName}</span>
+          <div className="flex items-center gap-2">
+            <LikeButton targetType="teardown" targetId={t.id} initialLiked={userState.liked} likeCount={counts.likes} isLoggedIn={!!currentUserId} size="sm" showCount />
+            <SaveButton targetType="teardown" targetId={t.id} initialSaved={userState.saved} saveCount={counts.saves} isLoggedIn={!!currentUserId} size="sm" showCount />
+            {t.productUrl && (
+              <a href={t.productUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-3 py-1 bg-coral text-white rounded-full text-xs font-bold hover:opacity-90">
+                <ExternalLink className="w-3 h-3" /> 官网
+              </a>
+            )}
+          </div>
         </div>
 
         <MarkdownContent>{t.body}</MarkdownContent>
@@ -53,6 +71,19 @@ export default async function TeardownDetail({ params }: { params: Promise<{ slu
         <div className="mt-12 pt-6 border-t border-dashed border-line text-sm text-muted-foreground text-center">
           — {t.authorName} · {formatDate(t.publishedAt)}
         </div>
+
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <LikeButton targetType="teardown" targetId={t.id} initialLiked={userState.liked} likeCount={counts.likes} isLoggedIn={!!currentUserId} showCount />
+          <SaveButton targetType="teardown" targetId={t.id} initialSaved={userState.saved} saveCount={counts.saves} isLoggedIn={!!currentUserId} />
+        </div>
+
+        <CommentsSection
+          targetType="teardown"
+          targetId={t.id}
+          comments={commentList as any}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+        />
       </article>
     </div>
   );

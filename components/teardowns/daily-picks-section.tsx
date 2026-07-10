@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { Bookmark, BookmarkCheck, ExternalLink, ChevronDown } from 'lucide-react';
+import { ExternalLink, ChevronDown } from 'lucide-react';
+import { SaveButton, LikeButton } from '@/components/interactions/reaction-buttons';
 
 const CATS = [
   { key: 'all',           label: '全部' },
@@ -23,32 +24,38 @@ const CAT_BADGE_COLOR: Record<string, string> = {
   'consumer':      'bg-gold text-ink',
 };
 
-const SAVED_KEY = 'ai-lens-saved-picks';
-
-export function DailyPicksSection({ picks, activeCat: initialCat }: { picks: any[]; activeCat: string }) {
+export function DailyPicksSection({
+  picks,
+  activeCat: initialCat,
+  currentUserId,
+  likeCounts,
+  saveCounts,
+  userLikedIds,
+  userSavedIds,
+}: {
+  picks: any[];
+  activeCat: string;
+  currentUserId: string | null;
+  likeCounts: Record<string, number>;
+  saveCounts: Record<string, number>;
+  userLikedIds: string[];
+  userSavedIds: string[];
+}) {
   const [activeCat, setActiveCat] = useState(initialCat);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [saved, setSaved] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      setSaved(JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'));
-    } catch {}
-  }, []);
-
-  const toggleSave = (id: string) => {
-    const next = saved.includes(id) ? saved.filter((x) => x !== id) : [...saved, id];
-    setSaved(next);
-    try { localStorage.setItem(SAVED_KEY, JSON.stringify(next)); } catch {}
-  };
 
   const filtered = activeCat === 'all' ? picks : picks.filter((p) => p.category === activeCat);
   const publishedPicks = filtered.filter((p) => !p.isDraft);
   const draftPicks = filtered.filter((p) => p.isDraft);
 
+  const sortedPub = [...publishedPicks].sort((a, b) => (likeCounts[b.id] || 0) - (likeCounts[a.id] || 0));
+
+  const likedSet = new Set(userLikedIds);
+  const savedSet = new Set(userSavedIds);
+  const isLoggedIn = !!currentUserId;
+
   return (
     <>
-      {/* 分类筛选 */}
       <div className="flex flex-wrap gap-2 mb-6">
         {CATS.map((c) => (
           <button
@@ -63,15 +70,17 @@ export function DailyPicksSection({ picks, activeCat: initialCat }: { picks: any
         ))}
       </div>
 
-      {/* 卡片网格 */}
       {filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-line rounded-xl">该分类下暂无精选</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5" style={{ gridAutoFlow: 'dense' }}>
-          {[...publishedPicks, ...draftPicks].map((p) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" style={{ gridAutoFlow: 'dense' }}>
+          {[...sortedPub, ...draftPicks].map((p) => {
             const isExpanded = expandedId === p.id;
-            const isSaved = saved.includes(p.id);
-            const isHot = (p.score || 0) >= 85;
+            const likes = likeCounts[p.id] || 0;
+            const saves = saveCounts[p.id] || 0;
+            const liked = likedSet.has(p.id);
+            const saved = savedSet.has(p.id);
+            const isHot = (p.score || 0) >= 85 || likes >= 5;
 
             return (
               <article
@@ -81,7 +90,6 @@ export function DailyPicksSection({ picks, activeCat: initialCat }: { picks: any
                 }`}
                 onClick={() => !isExpanded && setExpandedId(p.id)}
               >
-                {/* head */}
                 <div className="grid grid-cols-[48px_1fr_auto] gap-3 items-center">
                   <div
                     className="w-12 h-12 rounded-xl grid place-items-center text-xl text-white border-2 border-ink shadow-[2px_2px_0_#1a1a1a]"
@@ -101,29 +109,30 @@ export function DailyPicksSection({ picks, activeCat: initialCat }: { picks: any
                   }`}>{p.score || '—'}</div>
                 </div>
 
-                {/* tagline */}
-                <p className={`text-sm text-ink-soft leading-relaxed ${!isExpanded && 'line-clamp-2'}`}>
+                <p className={`text-sm text-ink-soft leading-relaxed ${!isExpanded ? 'line-clamp-2' : ''}`}>
                   {p.tagline}
                 </p>
 
-                {/* meta */}
-                <div className="flex justify-between items-center pt-2.5 border-t border-dashed border-line mt-auto">
+                <div className="flex justify-between items-center pt-2.5 border-t border-dashed border-line mt-auto flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                   <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black tracking-wider uppercase ${
                     CAT_BADGE_COLOR[p.category] || 'bg-bg-alt text-ink'
                   }`}>
                     {CATS.find((c) => c.key === p.category)?.label || p.category}
                   </span>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setExpandedId(isExpanded ? null : p.id); }}
-                    className="inline-flex items-center gap-1 px-3 py-1 border border-line rounded-full text-[11px] font-bold hover:bg-ink hover:text-background hover:border-ink transition"
-                  >
-                    {isExpanded ? '收起' : '展开 6 维'}
-                    <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <LikeButton targetType="daily_pick" targetId={p.id} initialLiked={liked} likeCount={likes} isLoggedIn={isLoggedIn} size="sm" showCount variant="ghost" />
+                    <SaveButton targetType="daily_pick" targetId={p.id} initialSaved={saved} saveCount={saves} isLoggedIn={isLoggedIn} size="sm" showCount variant="ghost" />
+                    <button
+                      onClick={() => setExpandedId(isExpanded ? null : p.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1 border border-line rounded-full text-[11px] font-bold hover:bg-ink hover:text-background hover:border-ink transition"
+                    >
+                      {isExpanded ? '收起' : '展开 6 维'}
+                      <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
                 </div>
 
-                {/* 展开区 · 6 维 */}
-                {isExpanded && <ExpandedDetail p={p} isSaved={isSaved} onSave={() => toggleSave(p.id)} />}
+                {isExpanded && <ExpandedDetail p={p} liked={liked} saved={saved} likes={likes} saves={saves} isLoggedIn={isLoggedIn} />}
               </article>
             );
           })}
@@ -133,7 +142,7 @@ export function DailyPicksSection({ picks, activeCat: initialCat }: { picks: any
   );
 }
 
-function ExpandedDetail({ p, isSaved, onSave }: { p: any; isSaved: boolean; onSave: () => void }) {
+function ExpandedDetail({ p, liked, saved, likes, saves, isLoggedIn }: { p: any; liked: boolean; saved: boolean; likes: number; saves: number; isLoggedIn: boolean }) {
   const dims = [
     { icon: '🎯', label: '定位',          content: p.positioning,       color: 'border-l-coral text-coral' },
     { icon: '💥', label: '痛点',          content: p.painPoint,         color: 'border-l-blue-600 text-blue-600' },
@@ -146,14 +155,13 @@ function ExpandedDetail({ p, isSaved, onSave }: { p: any; isSaved: boolean; onSa
   const anyContent = filledDims.length > 0 || p.consensus || p.criticism || p.editorTake;
 
   return (
-    <div className="mt-4 pt-4 border-t-2 border-dashed border-line">
+    <div className="mt-4 pt-4 border-t-2 border-dashed border-line" onClick={(e) => e.stopPropagation()}>
       {!anyContent && (
         <div className="p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg text-sm text-amber-800 mb-4">
           ⚠️ 这条是自动抓取的草稿。在 <Link href="/admin" className="underline font-bold">admin 后台</Link> 补充 6 维分析后会自动发布。
         </div>
       )}
 
-      {/* 6 维 */}
       {filledDims.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mb-5">
           {filledDims.map((d, i) => (
@@ -168,7 +176,6 @@ function ExpandedDetail({ p, isSaved, onSave }: { p: any; isSaved: boolean; onSa
         </div>
       )}
 
-      {/* 用户声音 */}
       {(p.consensus || p.criticism) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5">
           {p.consensus && (
@@ -186,7 +193,6 @@ function ExpandedDetail({ p, isSaved, onSave }: { p: any; isSaved: boolean; onSa
         </div>
       )}
 
-      {/* 编辑观点 */}
       {p.editorTake && (
         <div className="bg-ink text-background rounded-xl p-5 relative overflow-hidden mb-4">
           <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.2),transparent_70%)] pointer-events-none" />
@@ -195,25 +201,19 @@ function ExpandedDetail({ p, isSaved, onSave }: { p: any; isSaved: boolean; onSa
         </div>
       )}
 
-      {/* 底部动作 */}
-      <div className="flex justify-between items-center pt-3.5 border-t border-dashed border-line">
+      <div className="flex justify-between items-center pt-3.5 border-t border-dashed border-line flex-wrap gap-2">
         <a
           href={p.url || '#'}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-coral text-white border-2 border-ink rounded-lg font-bold text-sm shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition"
         >
           <ExternalLink className="w-3.5 h-3.5" /> 访问官网
         </a>
-        <button
-          onClick={(e) => { e.stopPropagation(); onSave(); }}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition ${
-            isSaved ? 'bg-gold text-ink border-ink' : 'bg-transparent border-line hover:border-ink'
-          }`}
-        >
-          {isSaved ? <><BookmarkCheck className="w-3.5 h-3.5" /> 已采集</> : <><Bookmark className="w-3.5 h-3.5" /> 采集灵感</>}
-        </button>
+        <div className="flex items-center gap-2">
+          <LikeButton targetType="daily_pick" targetId={p.id} initialLiked={liked} likeCount={likes} isLoggedIn={isLoggedIn} showCount />
+          <SaveButton targetType="daily_pick" targetId={p.id} initialSaved={saved} saveCount={saves} isLoggedIn={isLoggedIn} />
+        </div>
       </div>
     </div>
   );
