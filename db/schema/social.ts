@@ -100,3 +100,23 @@ export type Save = typeof saves.$inferSelect;
 export type Like = typeof likes.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
+
+// ============================================================
+// 邮件订阅 · 不需要注册账号 · 邮箱即可订阅 Newsletter
+// ============================================================
+export const newsletterSubscribers = pgTable('newsletter_subscribers', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  // 用来生成 unsubscribe 链接 · 收件人一键退订
+  unsubscribeToken: text('unsubscribe_token').notNull().unique(),
+  // 是否验证过邮箱(未来加 double opt-in)
+  verified: boolean('verified').notNull().default(true),
+  // 退订就 soft-delete · 保留数据但不再发信
+  active: boolean('active').notNull().default(true),
+  // 来源标记(哪个页面订阅的)
+  source: text('source'), // home | insights | footer | modal
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  lastSentAt: timestamp('last_sent_at', { withTimezone: true }),
+});
+
+export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;

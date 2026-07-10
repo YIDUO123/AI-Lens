@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { UserMenu } from '@/components/auth/user-menu';
 import { LensLogo } from '@/components/lens-logo';
-import { Search } from 'lucide-react';
+import { Search, Trophy } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/', label: '首页' },
@@ -48,6 +48,18 @@ export function Nav() {
             );
           })}
         </ul>
+
+        {/* 排行榜 */}
+        <Link
+          href="/leaderboard"
+          aria-label="排行榜"
+          className={cn(
+            'p-2 rounded-full border-2 border-line hover:border-ink hover:bg-bg-alt transition',
+            pathname === '/leaderboard' && 'border-coral text-coral',
+          )}
+        >
+          <Trophy className="w-4 h-4" />
+        </Link>
 
         {/* 搜索图标 */}
         <Link

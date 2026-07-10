@@ -1,0 +1,21 @@
+name: Weekly Newsletter
+
+# 每周日 12:00 UTC = 周日 20:00 北京时间
+# 顺便加个手动触发按钮方便你测试
+on:
+  schedule:
+    - cron: '0 12 * * 0'
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit newsletter endpoint
+        run: |
+          echo "🚀 触发周报发送…"
+          curl -sSf -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://ai-lens-six.vercel.app/api/cron/newsletter" | tee response.json
+          echo ""
+          echo "✅ 发送完成"

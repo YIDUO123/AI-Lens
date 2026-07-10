@@ -5,8 +5,8 @@
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import { db, articles, teardowns, timelineVersions, dailyPicks, newsItems } from '@/db';
-import { sql } from 'drizzle-orm';
+import { db, articles, teardowns, timelineVersions, dailyPicks, newsItems, newsletterSubscribers } from '@/db';
+import { sql, eq } from 'drizzle-orm';
 import Link from 'next/link';
 import { FileText, BookOpen, Rocket, Star, Newspaper, ArrowRight, Database, ExternalLink, User as UserIcon, Coffee } from 'lucide-react';
 
@@ -25,12 +25,13 @@ export default async function AdminPage() {
   }
 
   // 内容统计
-  const [[a], [t], [tv], [dp], [n]] = await Promise.all([
+  const [[a], [t], [tv], [dp], [n], [nl]] = await Promise.all([
     db.select({ n: sql<number>`count(*)::int` }).from(articles),
     db.select({ n: sql<number>`count(*)::int` }).from(teardowns),
     db.select({ n: sql<number>`count(*)::int` }).from(timelineVersions),
     db.select({ n: sql<number>`count(*)::int` }).from(dailyPicks),
     db.select({ n: sql<number>`count(*)::int` }).from(newsItems),
+    db.select({ n: sql<number>`count(*)::int` }).from(newsletterSubscribers).where(eq(newsletterSubscribers.active, true)),
   ]);
 
   return (
@@ -111,6 +112,7 @@ export default async function AdminPage() {
             <StatusLine label="模型对比" value="每天自动刷新" ok />
             <StatusLine label="创投精选" value="每天 8:21 抓取" ok />
             <StatusLine label="归档" value="每周一 3:07 清理旧数据" ok />
+            <StatusLine label="Newsletter" value={`${nl.n} 位订阅者 · 每周日 20:00 发送`} ok />
           </div>
 
           <div className="mt-4 pt-4 border-t border-dashed border-line flex gap-2 text-xs">

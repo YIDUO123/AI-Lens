@@ -11,6 +11,7 @@ import {
   getFamilyCounts,
 } from '@/lib/db/queries';
 import { LiveNewsFeed } from '@/components/home/live-news-feed';
+import { NewsletterForm } from '@/components/newsletter-form';
 
 export const revalidate = 60;
 
@@ -100,6 +101,11 @@ export default function HomePage() {
           <ModuleCard num="03" icon="🔄" title="模型代际演化" desc="不追单次版本,追每个 AI 家族的完整弧线 —— OpenAI、Anthropic、Google、Cursor、国内梯队五条时间轴。" href="/timeline" cta="28 代模型" iconBg="bg-gold text-ink" />
           <ModuleCard num="04" icon="✍️" title="独立洞察专栏" desc="行业思考 · 上手体验 · 方法论。不只是 AI 产品,也谈 PM 如何在 AI 时代重新定义自己。" href="/insights" cta="7 篇长文" iconBg="bg-ink text-background" />
         </div>
+      </section>
+
+      {/* Newsletter · 首页底部订阅 */}
+      <section className="container my-16 md:my-20">
+        <NewsletterForm source="home" />
       </section>
     </>
   );
