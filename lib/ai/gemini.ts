@@ -1,17 +1,20 @@
 /**
  * 统一 AI 生成接口
- * 优先级:DEEPSEEK_API_KEY > GROQ_API_KEY > GEMINI_API_KEY
+ * 优先级:DEEPSEEK_API_KEY > ZHIPU_API_KEY > GROQ_API_KEY > GEMINI_API_KEY
  *
- * DeepSeek: 国产 · 中文出色 · 稳定 · 便宜到白菜价 · 中国区可直接注册
- * Groq: 14,400 req/day 免费 · 速度极快 · 但注册页对中国 IP blocked (API 从 Vercel 可用)
- * Gemini: 1500 req/day 免费 · 但 Free tier 常 503 / 429
+ * DeepSeek: 国产 · 中文出色 · 稳定 · 便宜 · 需充值(¥10 起 · 够用几年)
+ * Zhipu GLM-4-Flash: 国产 · 完全免费 · 无限次 · 中文尚可 · 中国区首选
+ * Groq: 14,400 req/day 免费 · 速度极快 · 但注册页对中国 IP blocked
+ * Gemini: 1500 req/day 免费 · Free tier 常 503 / 429
  */
 
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-chat';
+const ZHIPU_MODEL = process.env.ZHIPU_MODEL || 'glm-4-flash';
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
 const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/chat/completions';
+const ZHIPU_ENDPOINT = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 const GEMINI_ENDPOINT = (m: string) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
 
@@ -42,6 +45,36 @@ async function callDeepSeek(prompt: string, opts: { temperature: number; maxToke
   const data = await res.json();
   const text = data.choices?.[0]?.message?.content || '';
   if (!text) throw new Error('DeepSeek 返回为空');
+  return text;
+}
+
+async function callZhipu(prompt: string, opts: { temperature: number; maxTokens: number }): Promise<string> {
+  const key = process.env.ZHIPU_API_KEY;
+  if (!key) throw new Error('ZHIPU_API_KEY 未配置');
+
+  const res = await fetch(ZHIPU_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify({
+      model: ZHIPU_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: opts.temperature,
+      max_tokens: opts.maxTokens,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Zhipu ${res.status}: ${err.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  if (!text) throw new Error('Zhipu 返回为空');
   return text;
 }
 
@@ -111,11 +144,12 @@ async function callGemini(prompt: string, opts: { temperature: number; maxTokens
 export async function generateWithAI(prompt: string, opts?: { temperature?: number; maxTokens?: number }): Promise<string> {
   const params = { temperature: opts?.temperature ?? 0.7, maxTokens: opts?.maxTokens ?? 2048 };
   const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY;
+  const hasZhipu = !!process.env.ZHIPU_API_KEY;
   const hasGroq = !!process.env.GROQ_API_KEY;
   const hasGemini = !!process.env.GEMINI_API_KEY;
 
-  if (!hasDeepSeek && !hasGroq && !hasGemini) {
-    throw new Error('未配置 AI 服务 · 请在 Vercel env 设置 DEEPSEEK_API_KEY / GROQ_API_KEY / GEMINI_API_KEY 中的至少一个');
+  if (!hasDeepSeek && !hasZhipu && !hasGroq && !hasGemini) {
+    throw new Error('未配置 AI 服务 · 请在 Vercel env 设置 DEEPSEEK_API_KEY / ZHIPU_API_KEY / GROQ_API_KEY / GEMINI_API_KEY 中的至少一个');
   }
 
   const errors: string[] = [];
@@ -123,6 +157,11 @@ export async function generateWithAI(prompt: string, opts?: { temperature?: numb
   if (hasDeepSeek) {
     try { return await callDeepSeek(prompt, params); }
     catch (e: any) { errors.push('DeepSeek: ' + e.message); }
+  }
+
+  if (hasZhipu) {
+    try { return await callZhipu(prompt, params); }
+    catch (e: any) { errors.push('Zhipu: ' + e.message); }
   }
 
   if (hasGroq) {
