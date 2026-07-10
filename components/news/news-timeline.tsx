@@ -1,7 +1,10 @@
 /**
  * News Timeline · 按日期分组的完整时间线
  */
-import { getLatestNews } from '@/lib/db/queries';
+import { getLatestNews, getInteractionCountsBatch, getUserInteractions } from '@/lib/db/queries';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
 
 const PM_RULES = [
   { kw: ['agent', 'agents', '智能体', 'browser use', 'computer use'], insight: 'Agent 是当下最卷的赛道。核心问题:通用能力和垂直场景的平衡。' },
@@ -81,6 +84,15 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
     );
   }
 
+  // 批量查赞/藏 + 用户交互状态(不影响时间排序)
+  const session = await auth.api.getSession({ headers: await headers() });
+  const currentUserId = session?.user?.id || null;
+  const ids = filtered.map((n) => n.id);
+  const [counts, userState] = await Promise.all([
+    getInteractionCountsBatch('news_item', ids),
+    currentUserId ? getUserInteractions(currentUserId, 'news_item', ids) : Promise.resolve({ likedIds: new Set<string>(), savedIds: new Set<string>() }),
+  ]);
+
   const grouped = groupByDate(filtered);
 
   return (
@@ -100,6 +112,10 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                 const cat = CAT_STYLES[catKey];
                 const insight = pmInsight(it.title, it.summary);
                 const isHot = (it.score || 0) >= 75;
+                const likes = counts.likes[it.id] || 0;
+                const saves = counts.saves[it.id] || 0;
+                const liked = userState.likedIds.has(it.id);
+                const saved = userState.savedIds.has(it.id);
                 return (
                   <article
                     key={it.id}
@@ -124,6 +140,30 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                           {insight}
                         </div>
                       )}
+
+                      {/* 交互按钮 · 不影响排序 */}
+                      <div className="flex items-center gap-1.5 mt-3">
+                        <LikeButton
+                          targetType="news_item"
+                          targetId={it.id}
+                          initialLiked={liked}
+                          likeCount={likes}
+                          isLoggedIn={!!currentUserId}
+                          size="sm"
+                          showCount
+                          variant="ghost"
+                        />
+                        <SaveButton
+                          targetType="news_item"
+                          targetId={it.id}
+                          initialSaved={saved}
+                          saveCount={saves}
+                          isLoggedIn={!!currentUserId}
+                          size="sm"
+                          showCount
+                          variant="ghost"
+                        />
+                      </div>
                     </div>
 
                     <div

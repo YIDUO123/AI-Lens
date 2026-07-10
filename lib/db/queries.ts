@@ -226,26 +226,28 @@ export async function getUserSaves(userId: string) {
     .where(eq(saves.userId, userId))
     .orderBy(desc(saves.createdAt));
 
-  // 按类型分组,分别加载详情
   const byType: Record<string, string[]> = {};
   for (const r of rows) {
     if (!byType[r.targetType]) byType[r.targetType] = [];
     byType[r.targetType].push(r.targetId);
   }
 
-  const [articleRows, teardownRows, pickRows] = await Promise.all([
+  const [articleRows, teardownRows, pickRows, newsRows] = await Promise.all([
     byType.article ? db.select({ id: articles.id, slug: articles.slug, title: articles.title, category: articles.category, publishedAt: articles.publishedAt })
       .from(articles).where(inArray(articles.id, byType.article)) : Promise.resolve([]),
     byType.teardown ? db.select({ id: teardowns.id, slug: teardowns.slug, title: teardowns.title, category: teardowns.category, publishedAt: teardowns.publishedAt })
       .from(teardowns).where(inArray(teardowns.id, byType.teardown)) : Promise.resolve([]),
     byType.daily_pick ? db.select({ id: dailyPicks.id, slug: dailyPicks.slug, name: dailyPicks.name, tagline: dailyPicks.tagline, url: dailyPicks.url, category: dailyPicks.category, logo: dailyPicks.logo, logoColor: dailyPicks.logoColor })
       .from(dailyPicks).where(inArray(dailyPicks.id, byType.daily_pick)) : Promise.resolve([]),
+    byType.news_item ? db.select({ id: newsItems.id, title: newsItems.title, url: newsItems.url, source: newsItems.source, publishedAt: newsItems.publishedAt, category: newsItems.category })
+      .from(newsItems).where(inArray(newsItems.id, byType.news_item)) : Promise.resolve([]),
   ]);
 
   return {
     articles: articleRows as any[],
     teardowns: teardownRows as any[],
     daily_picks: pickRows as any[],
+    news_items: newsRows as any[],
     total: rows.length,
   };
 }
@@ -264,19 +266,22 @@ export async function getUserLikes(userId: string) {
     byType[r.targetType].push(r.targetId);
   }
 
-  const [articleRows, teardownRows, pickRows] = await Promise.all([
+  const [articleRows, teardownRows, pickRows, newsRows] = await Promise.all([
     byType.article ? db.select({ id: articles.id, slug: articles.slug, title: articles.title, category: articles.category })
       .from(articles).where(inArray(articles.id, byType.article)) : Promise.resolve([]),
     byType.teardown ? db.select({ id: teardowns.id, slug: teardowns.slug, title: teardowns.title, category: teardowns.category })
       .from(teardowns).where(inArray(teardowns.id, byType.teardown)) : Promise.resolve([]),
     byType.daily_pick ? db.select({ id: dailyPicks.id, slug: dailyPicks.slug, name: dailyPicks.name, tagline: dailyPicks.tagline, url: dailyPicks.url })
       .from(dailyPicks).where(inArray(dailyPicks.id, byType.daily_pick)) : Promise.resolve([]),
+    byType.news_item ? db.select({ id: newsItems.id, title: newsItems.title, url: newsItems.url, source: newsItems.source, publishedAt: newsItems.publishedAt })
+      .from(newsItems).where(inArray(newsItems.id, byType.news_item)) : Promise.resolve([]),
   ]);
 
   return {
     articles: articleRows as any[],
     teardowns: teardownRows as any[],
     daily_picks: pickRows as any[],
+    news_items: newsRows as any[],
     total: rows.length,
   };
 }

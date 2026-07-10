@@ -74,6 +74,7 @@ export default async function MePage() {
           <EmptyState hint="在" linkHref="/teardowns#picks" linkLabel="产品拆解" tail=" 或洞察长文里点收藏,内容会出现在这里。" />
         ) : (
           <div className="space-y-6">
+            {savesData.news_items.length > 0 && <SubGroup title="AI 资讯" items={savesData.news_items} kind="news_item" />}
             {savesData.daily_picks.length > 0 && <SubGroup title="每日创投精选" items={savesData.daily_picks} kind="daily_pick" />}
             {savesData.articles.length > 0 && <SubGroup title="洞察长文" items={savesData.articles} kind="article" />}
             {savesData.teardowns.length > 0 && <SubGroup title="产品拆解" items={savesData.teardowns} kind="teardown" />}
@@ -89,6 +90,7 @@ export default async function MePage() {
           <EmptyState hint="读到共鸣的内容,点个 ❤️ 就会记录在这里。" linkHref="/insights" linkLabel="从洞察长文开始" tail="" />
         ) : (
           <div className="space-y-6">
+            {likesData.news_items.length > 0 && <SubGroup title="AI 资讯" items={likesData.news_items} kind="news_item" />}
             {likesData.articles.length > 0 && <SubGroup title="洞察长文" items={likesData.articles} kind="article" />}
             {likesData.teardowns.length > 0 && <SubGroup title="产品拆解" items={likesData.teardowns} kind="teardown" />}
             {likesData.daily_picks.length > 0 && <SubGroup title="每日创投精选" items={likesData.daily_picks} kind="daily_pick" />}
@@ -153,7 +155,7 @@ function EmptyState({ hint, linkHref, linkLabel, tail }: { hint: string; linkHre
   );
 }
 
-function SubGroup({ title, items, kind }: { title: string; items: any[]; kind: 'article' | 'teardown' | 'daily_pick' }) {
+function SubGroup({ title, items, kind }: { title: string; items: any[]; kind: 'article' | 'teardown' | 'daily_pick' | 'news_item' }) {
   return (
     <div>
       <h3 className="text-xs font-black tracking-widest uppercase text-ink-soft mb-2.5">{title} · {items.length}</h3>
@@ -164,7 +166,7 @@ function SubGroup({ title, items, kind }: { title: string; items: any[]; kind: '
   );
 }
 
-function SaveCard({ it, kind }: { it: any; kind: 'article' | 'teardown' | 'daily_pick' }) {
+function SaveCard({ it, kind }: { it: any; kind: 'article' | 'teardown' | 'daily_pick' | 'news_item' }) {
   if (kind === 'daily_pick') {
     return (
       <a href={it.url || '#'} target="_blank" rel="noopener noreferrer" className="bg-cream border-2 border-ink rounded-xl p-4 flex gap-3 items-center hover:-translate-y-0.5 transition shadow-brutal-sm">
@@ -174,6 +176,17 @@ function SaveCard({ it, kind }: { it: any; kind: 'article' | 'teardown' | 'daily
         <div className="min-w-0 flex-1">
           <div className="font-bold text-sm truncate">{it.name}</div>
           <div className="text-xs text-ink-soft line-clamp-1">{it.tagline}</div>
+        </div>
+        <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+      </a>
+    );
+  }
+  if (kind === 'news_item') {
+    return (
+      <a href={it.url || '#'} target="_blank" rel="noopener noreferrer" className="bg-cream border-2 border-ink rounded-xl p-4 flex gap-3 items-center hover:-translate-y-0.5 transition shadow-brutal-sm">
+        <div className="min-w-0 flex-1">
+          <div className="font-bold text-sm mb-0.5 line-clamp-2">{it.title}</div>
+          <div className="text-[10px] text-muted-foreground truncate">{it.source || 'AI 资讯'}</div>
         </div>
         <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
       </a>
