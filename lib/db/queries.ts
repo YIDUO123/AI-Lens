@@ -26,6 +26,37 @@ export const getLatestNews = unstable_cache(
   { revalidate: 120, tags: ['news'] },
 );
 
+// 按分类拉最新 · 用于左侧分类过滤时能拿到该类别下的完整最新数据
+export const getLatestNewsByCategory = unstable_cache(
+  async (categoryKey: 'all' | 'launch' | 'industry' | 'paper' | 'tip', limit = 50) => {
+    // 分类映射:UI 侧的 categoryKey → DB 里的 category 字段值
+    const dbCats: string[] = (() => {
+      if (categoryKey === 'launch') return ['ai-models', 'ai-products'];
+      if (categoryKey === 'industry') return ['industry'];
+      if (categoryKey === 'paper') return ['paper'];
+      if (categoryKey === 'tip') return ['tip'];
+      return []; // all
+    })();
+
+    if (dbCats.length === 0) {
+      return db
+        .select()
+        .from(newsItems)
+        .orderBy(desc(newsItems.publishedAt))
+        .limit(limit);
+    }
+
+    return db
+      .select()
+      .from(newsItems)
+      .where(inArray(newsItems.category, dbCats))
+      .orderBy(desc(newsItems.publishedAt))
+      .limit(limit);
+  },
+  ['news-by-category'],
+  { revalidate: 120, tags: ['news'] },
+);
+
 export const getNewsCount = unstable_cache(
   async () => {
     const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(newsItems);
@@ -109,11 +140,13 @@ export async function getPublishedDailyPicks(limit = 20) {
 }
 
 export const getAllDailyPicks = unstable_cache(
-  async (limit = 20) => {
-    // 展示所有(draft + published),前端可标注 draft
+  async (limit = 12) => {
+    // 只展示已发布的(isDraft=false)· 默认 12 条 · 每日更新覆盖旧的
+    // 被用户收藏的老 pick · 通过 getUserSaves(id) 依然可访问 · 不会丢
     return db
       .select()
       .from(dailyPicks)
+      .where(eq(dailyPicks.isDraft, false))
       .orderBy(desc(dailyPicks.pickedAt))
       .limit(limit);
   },

@@ -28,7 +28,8 @@ const DEFAULT_SELECTION = [
 const MAX = 4;
 
 export function ModelComparison({ models }: { models: any[] }) {
-  const [selected, setSelected] = useState<string[]>(DEFAULT_SELECTION.filter((id) => models.some((m) => m.id === id)));
+  // 主动权交给用户 · 不预选任何模型 · 首次进入引导用户选
+  const [selected, setSelected] = useState<string[]>([]);
 
   const toggle = (id: string) => {
     setSelected((cur) => {

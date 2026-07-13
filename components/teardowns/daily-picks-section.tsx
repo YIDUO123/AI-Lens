@@ -157,8 +157,8 @@ function ExpandedDetail({ p, liked, saved, likes, saves, isLoggedIn }: { p: any;
   return (
     <div className="mt-4 pt-4 border-t-2 border-dashed border-line" onClick={(e) => e.stopPropagation()}>
       {!anyContent && (
-        <div className="p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg text-sm text-amber-800 mb-4">
-          ⚠️ 这条是自动抓取的草稿。在 <Link href="/admin" className="underline font-bold">admin 后台</Link> 补充 6 维分析后会自动发布。
+        <div className="p-4 bg-bg-alt border-l-4 border-line rounded-r-lg text-sm text-muted-foreground mb-4">
+          这条精选还没补上 6 维分析 · 编辑正在赶稿路上 ✍️
         </div>
       )}
 

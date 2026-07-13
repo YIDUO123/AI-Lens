@@ -1,7 +1,7 @@
 /**
  * News Timeline · 按日期分组的完整时间线
  */
-import { getLatestNews, getInteractionCountsBatch, getUserInteractions } from '@/lib/db/queries';
+import { getLatestNews, getLatestNewsByCategory, getInteractionCountsBatch, getUserInteractions } from '@/lib/db/queries';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
@@ -72,8 +72,8 @@ function cleanSource(s: string | null): string {
 }
 
 export async function NewsTimeline({ activeCat }: { activeCat: string }) {
-  const all = await getLatestNews(50);
-  const filtered = activeCat === 'all' ? all : all.filter((n) => mapCatKey(n.category) === activeCat);
+  // 按分类去 DB 拿 · 每类都能拿到该类的最新 50 条 · 不再客户端 filter 到几乎为空
+  const filtered = await getLatestNewsByCategory(activeCat as any, 50);
 
   if (filtered.length === 0) {
     return (
@@ -181,6 +181,10 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
           </div>
         );
       })}
+
+      <div className="mt-8 pt-6 border-t border-dashed border-line text-center text-sm text-muted-foreground">
+        以上显示 <b className="text-ink">{filtered.length}</b> 条最新资讯 · 更早内容请用顶部 🔍 <a href="/search" className="text-coral font-bold underline">搜索</a>
+      </div>
     </div>
   );
 }

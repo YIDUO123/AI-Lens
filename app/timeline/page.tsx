@@ -45,6 +45,9 @@ export default async function TimelinePage({ searchParams }: { searchParams: Pro
             OpenAI、Anthropic、Google、Cursor、国内梯队 —— 五条独立时间轴,从今天倒着讲到起点。
             突破性版本用金色星标出,行业信号与关键能力分开呈现。
           </p>
+          <p className="mt-3 text-xs text-muted-foreground italic">
+            由 AI Lens 编辑手工维护 · 每周补入新版本(自动抓取时间线正在开发中)· 有遗漏欢迎<a href="/about" className="text-coral font-bold hover:underline">联系告知</a>。
+          </p>
         </div>
       </section>
 

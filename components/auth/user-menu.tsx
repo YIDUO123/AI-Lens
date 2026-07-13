@@ -81,8 +81,8 @@ export function UserMenu() {
             <button
               onClick={async () => {
                 await signOut();
-                router.push('/');
-                router.refresh();
+                // 用完整刷新代替 router.refresh() · 更稳 · 也能清干净所有 client state
+                window.location.href = '/';
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
             >

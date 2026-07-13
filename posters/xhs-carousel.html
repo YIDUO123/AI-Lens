@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Lens · 小红书套图</title>
+  <style>
+    /* ============================================================
+       AI Lens 小红书套图 · 3 张一套 · 1080×1440 (3:4)
+       打开这个文件 · 每张海报**右键"另存为图片"或截图**即可
+       ============================================================ */
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #e5e5e5;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .poster {
+      width: 1080px;
+      height: 1440px;
+      background: #fefaf3;
+      color: #1a1a1a;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    }
+
+    /* ==================== 通用品牌元素 ==================== */
+    .brand-tag {
+      display: inline-block;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #ff6b35;
+    }
+    em.accent {
+      font-family: "Times New Roman", "Songti SC", serif;
+      font-style: italic;
+      color: #ff6b35;
+      font-weight: 900;
+    }
+    em.blue {
+      font-family: "Times New Roman", "Songti SC", serif;
+      font-style: italic;
+      color: #2f6feb;
+      font-weight: 900;
+    }
+    .url-footer {
+      position: absolute;
+      bottom: 60px;
+      left: 80px;
+      right: 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .url-footer .site {
+      color: #ff6b35;
+    }
+    .url-footer .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .lens-logo {
+      width: 44px;
+      height: 44px;
+      border: 3px solid #1a1a1a;
+      border-radius: 50%;
+      position: relative;
+      display: inline-block;
+    }
+    .lens-logo::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: #ff6b35;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* 底纹点阵 */
+    .dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, #1a1a1a 1.2px, transparent 1.2px);
+      background-size: 32px 32px;
+      opacity: 0.06;
+      pointer-events: none;
+    }
+
+    /* ==================== POSTER 1 · 主封面 ==================== */
+    .p1 .kicker {
+      position: absolute;
+      top: 100px;
+      left: 80px;
+    }
+    .p1 .headline {
+      position: absolute;
+      top: 220px;
+      left: 80px;
+      right: 80px;
+      font-size: 148px;
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -6px;
+    }
+    .p1 .headline .line1 { color: #1a1a1a; }
+    .p1 .headline .line2 { color: #1a1a1a; }
+    .p1 .headline .line3 { color: #1a1a1a; }
+    .p1 .subline {
+      position: absolute;
+      top: 780px;
+      left: 80px;
+      right: 80px;
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #444;
+    }
+    .p1 .subline em {
+      color: #ff6b35;
+      font-style: normal;
+      font-weight: 900;
+      background: #fff3ec;
+      padding: 2px 12px;
+      border-radius: 6px;
+    }
+    .p1 .badge {
+      position: absolute;
+      top: 1020px;
+      right: 80px;
+      background: #1a1a1a;
+      color: #fefaf3;
+      padding: 20px 32px;
+      border-radius: 40px;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      transform: rotate(-3deg);
+    }
+    .p1 .badge span {
+      color: #ff6b35;
+    }
+    .p1 .corner-orange {
+      position: absolute;
+      top: -100px;
+      right: -100px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255,107,53,0.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .p1 .corner-blue {
+      position: absolute;
+      bottom: 200px;
+      left: -80px;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(47,111,235,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ==================== POSTER 2 · 六大模块 ==================== */
+    .p2 .kicker {
+      position: absolute;
+      top: 90px;
+      left: 80px;
+    }
+    .p2 h1 {
+      position: absolute;
+      top: 150px;
+      left: 80px;
+      right: 80px;
+      font-size: 88px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -3px;
+    }
+    .p2 .modules {
+      position: absolute;
+      top: 350px;
+      left: 80px;
+      right: 80px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .module {
+      background: #fff;
+      border: 3px solid #1a1a1a;
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 6px 6px 0 #1a1a1a;
+      position: relative;
+    }
+    .module .num {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      font-family: "Times New Roman", serif;
+      font-size: 28px;
+      color: #999;
+      font-style: italic;
+      font-weight: 900;
+    }
+    .module .icon {
+      font-size: 44px;
+      margin-bottom: 8px;
+    }
+    .module .name {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 4px;
+      letter-spacing: -1px;
+    }
+    .module .desc {
+      font-size: 20px;
+      color: #666;
+      line-height: 1.4;
+    }
+    .module.coral { background: #ff6b35; color: #fff; }
+    .module.coral .num { color: rgba(255,255,255,0.5); }
+    .module.coral .desc { color: rgba(255,255,255,0.9); }
+    .module.ink { background: #1a1a1a; color: #fefaf3; }
+    .module.ink .num { color: rgba(255,255,255,0.3); }
+    .module.ink .desc { color: rgba(255,255,255,0.7); }
+
+    /* ==================== POSTER 3 · CTA ==================== */
+    .p3 { background: #1a1a1a; color: #fefaf3; }
+    .p3 .dots {
+      background-image: radial-gradient(circle, #fff 1.2px, transparent 1.2px);
+      opacity: 0.05;
+    }
+    .p3 .corner-orange-big {
+      position: absolute;
+      top: -200px;
+      left: -200px;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(255,107,53,0.25) 0%, transparent 65%);
+    }
+    .p3 .kicker {
+      position: absolute;
+      top: 120px;
+      left: 80px;
+      color: #ff6b35;
+    }
+    .p3 h1 {
+      position: absolute;
+      top: 230px;
+      left: 80px;
+      right: 80px;
+      font-size: 120px;
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -5px;
+      color: #fefaf3;
+    }
+    .p3 h1 em {
+      color: #ff6b35;
+      font-style: normal;
+    }
+    .p3 .quote {
+      position: absolute;
+      top: 720px;
+      left: 80px;
+      right: 80px;
+      font-family: "Times New Roman", "Songti SC", serif;
+      font-size: 42px;
+      font-style: italic;
+      line-height: 1.4;
+      color: rgba(255,250,243,0.75);
+      padding-left: 24px;
+      border-left: 6px solid #ff6b35;
+    }
+    .p3 .url-box {
+      position: absolute;
+      bottom: 200px;
+      left: 80px;
+      right: 80px;
+      background: #ff6b35;
+      color: #fefaf3;
+      border: 4px solid #fefaf3;
+      border-radius: 20px;
+      padding: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .p3 .url-box .prefix {
+      font-size: 22px;
+      letter-spacing: 6px;
+      font-weight: 900;
+      opacity: 0.7;
+    }
+    .p3 .url-box .url {
+      font-size: 60px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-top: 6px;
+    }
+    .p3 .url-box .arrow {
+      font-size: 90px;
+      font-weight: 900;
+    }
+    .p3 .url-footer {
+      color: rgba(255,250,243,0.6);
+    }
+    .p3 .url-footer .site { color: rgba(255,250,243,0.6); }
+    .p3 .lens-logo {
+      border-color: #fefaf3;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Poster 1 · 主封面(小红书首张 · 决定点击率)              -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="poster p1">
+    <div class="dots"></div>
+    <div class="corner-orange"></div>
+    <div class="corner-blue"></div>
+
+    <div class="kicker brand-tag">AI Lens · 独立开发</div>
+
+    <div class="headline">
+      <div class="line1">每天 200+ 条</div>
+      <div class="line2">AI 资讯轰炸</div>
+      <div class="line3">我做了个<em class="accent">滤镜</em></div>
+    </div>
+
+    <div class="subline">
+      过滤 · 结构化 · 二次分析<br />
+      从<em>看见</em>到<em>看懂</em>
+    </div>
+
+    <div class="badge">花了 <span>1 个月</span> · 一个人 · Vibe Coding</div>
+
+    <div class="url-footer">
+      <div class="brand">
+        <div class="lens-logo"></div>
+        <span>AI Lens</span>
+      </div>
+      <div class="site">ailens.cloud</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Poster 2 · 6 大模块(展示产品价值)                        -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="poster p2">
+    <div class="dots"></div>
+
+    <div class="kicker brand-tag">Six Lenses · 6 个观察角度</div>
+
+    <h1>
+      不做<em class="accent">信息瀑布</em><br />
+      只做<em class="accent">信息滤镜</em>
+    </h1>
+
+    <div class="modules">
+      <div class="module coral">
+        <div class="num">01</div>
+        <div class="icon">📰</div>
+        <div class="name">每日资讯</div>
+        <div class="desc">30 min 自动刷新<br />30+ 全球信源</div>
+      </div>
+      <div class="module">
+        <div class="num">02</div>
+        <div class="icon">🔬</div>
+        <div class="name">产品拆解</div>
+        <div class="desc">6 维分析框架<br />投研报告级</div>
+      </div>
+      <div class="module">
+        <div class="num">03</div>
+        <div class="icon">🔄</div>
+        <div class="name">模型追踪</div>
+        <div class="desc">5 大家族<br />代际时间线</div>
+      </div>
+      <div class="module ink">
+        <div class="num">04</div>
+        <div class="icon">✍️</div>
+        <div class="name">独立洞察</div>
+        <div class="desc">PM 视角<br />行业观察长文</div>
+      </div>
+      <div class="module">
+        <div class="num">05</div>
+        <div class="icon">🌟</div>
+        <div class="name">每日精选</div>
+        <div class="desc">HN + PH<br />AI 好产品日推</div>
+      </div>
+      <div class="module coral">
+        <div class="num">06</div>
+        <div class="icon">📧</div>
+        <div class="name">每周简报</div>
+        <div class="desc">周日晚 8 点<br />邮件送达 · 不打广告</div>
+      </div>
+    </div>
+
+    <div class="url-footer">
+      <div class="brand">
+        <div class="lens-logo"></div>
+        <span>AI Lens</span>
+      </div>
+      <div class="site">ailens.cloud</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Poster 3 · CTA(封底 · 引导访问)                         -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="poster p3">
+    <div class="dots"></div>
+    <div class="corner-orange-big"></div>
+
+    <div class="kicker brand-tag">Try it Now · 免费 · 无广告</div>
+
+    <h1>
+      看得 <em>多</em><br />
+      不如<br />
+      看得 <em>懂</em>
+    </h1>
+
+    <div class="quote">
+      "一个人 · 用 AI · 也能把想做的事做完。<br />
+      AI Lens 是我给自己写的 · 也送给你。"
+    </div>
+
+    <div class="url-box">
+      <div>
+        <div class="prefix">TRAVEL TO</div>
+        <div class="url">ailens.cloud</div>
+      </div>
+      <div class="arrow">↗</div>
+    </div>
+
+    <div class="url-footer">
+      <div class="brand">
+        <div class="lens-logo"></div>
+        <span>AI Lens · Independent · 2026</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

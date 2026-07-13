@@ -28,7 +28,7 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
   const libCat = sp.lib || 'all';
 
   const [picks, models, teardowns, session] = await Promise.all([
-    getAllDailyPicks(30),
+    getAllDailyPicks(12),
     getAllModels(),
     getPublishedTeardowns(30),
     auth.api.getSession({ headers: await headers() }),

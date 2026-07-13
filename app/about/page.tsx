@@ -148,9 +148,9 @@ export default async function AboutPage() {
 
           {/* 3 条信念 · 底部横排 · 补齐视觉密度 */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <PullQuote author="信念一" quote="信息本身没有价值,能筛出信号的判断力才有。" />
-            <PullQuote author="信念二" quote="不做 AI 生成的口水文,做一个人愿意署名的观点。" />
-            <PullQuote author="信念三" quote="产品的持续力,来自它的运营节奏,不来自它的技术栈。" />
+            <PullQuote author="信念一" quote="人人都是产品经理 · 产品本应为人民。" />
+            <PullQuote author="信念二" quote="AI 时代的机遇 · 是时刻关注前沿 · 尝试发展。" />
+            <PullQuote author="信念三" quote="做有理想 · 有素养 · 有能力的产品经理。" />
           </div>
         </div>
       </section>
@@ -219,73 +219,38 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* Colophon · 全屏深黑收尾 · 重新设计 */}
-      <section className="relative py-24 pb-32 overflow-hidden text-background">
+      {/* Colophon · 精简版 · 只留必要的技术栈 chip · 数据链路等技术细节移除 */}
+      <section className="relative py-20 pb-24 overflow-hidden text-background">
         <div className="absolute inset-0 -mx-[50vw] left-1/2 right-1/2 w-screen bg-ink" />
         <div className="absolute -top-20 right-[10%] w-96 h-96 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.18),transparent_70%)] pointer-events-none" />
-        <div className="absolute bottom-[20%] left-[5%] w-72 h-72 rounded-full bg-[radial-gradient(circle,rgba(255,184,77,0.12),transparent_70%)] pointer-events-none" />
 
         <div className="container relative">
           <div className="flex justify-between items-end flex-wrap gap-4 pb-4 border-b-2 border-dashed border-white/15 mb-12">
             <div>
               <div className="text-[10px] font-black tracking-[2px] uppercase text-coral mb-1">Colophon · 关于本站</div>
               <h2 className="text-4xl md:text-5xl font-black tracking-[-0.02em] text-background">
-                如何 <em className="accent">做出来的</em>?
+                <em className="accent">怎么运转的</em>?
               </h2>
             </div>
             <p className="text-xs text-white/55 max-w-[300px] leading-relaxed text-right">
-              产品经理不必手写代码,<br />但值得看清一个网站是怎么运转起来的。
+              一个人 + AI · 从 0 搭起来的
+              <br />独立媒体式产品
             </p>
           </div>
 
-          {/* 主区:数据流图(左)+ 技术栈卡(右)*/}
-          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-10">
-            {/* 左:数据流图 */}
-            <div>
-              <div className="text-[10px] font-black tracking-widest text-coral mb-4">🌊 数据链路</div>
-              <div className="space-y-3">
-                <FlowNode label="外部信源" content="AI 咨询 API · HackerNews · GitHub Trending · Product Hunt" desc="30+ 公开源" />
-                <FlowArrow />
-                <FlowNode label="定时抓取" content="资讯 30min · 模型 6h · 精选每日 · 周报每周" desc="4 条 · 自动去重" accent />
-                <FlowArrow />
-                <FlowNode label="Supabase Postgres" content="16 张表 · Drizzle ORM" desc="结构化存储 · 索引优化" />
-                <FlowArrow />
-                <FlowNode label="Next.js 服务端组件" content="React 19 · 流式渲染 · Vercel Data Cache" desc="Edge Network · 全球加速" accent />
-                <FlowArrow />
-                <FlowNode label="你的浏览器" content="Tailwind + shadcn/ui" desc="首屏 <110 kB · 秒开" />
-              </div>
-            </div>
-
-            {/* 右:技术栈 chip 网格 */}
-            <div>
-              <div className="text-[10px] font-black tracking-widest text-coral mb-4">🛠 技术栈</div>
-              <div className="grid grid-cols-2 gap-3">
-                <TechChip icon="⚛️" name="Next.js 15" desc="React 19 · TypeScript" />
-                <TechChip icon="🎨" name="Tailwind CSS" desc="+ shadcn/ui 组件库" />
-                <TechChip icon="💾" name="Supabase Postgres" desc="+ Drizzle ORM" />
-                <TechChip icon="🔐" name="better-auth" desc="GitHub OAuth · 邮箱密码" />
-                <TechChip icon="🤖" name="AI 4 通道" desc="DeepSeek · 智谱 · Groq · Gemini" />
-                <TechChip icon="🖼️" name="Vercel Blob" desc="图片上传 · 全球 CDN" />
-                <TechChip icon="📧" name="Resend" desc="每周 Newsletter 发送" />
-                <TechChip icon="⏰" name="GitHub Actions" desc="30 min 高频抓取 · 周报触发" />
-              </div>
-
-              <div className="mt-6 bg-white/[0.04] border border-white/12 rounded-xl p-5 hover:bg-white/[0.07] transition">
-                <div className="text-[10px] font-black tracking-widest text-coral mb-2">🌱 路线图</div>
-                <b className="block text-[15px] font-bold text-background mb-1.5">Batch 21 完 · 站内闭环</b>
-                <p className="text-[13px] text-white/60 leading-relaxed">
-                  已上线:URL 采集 · AI 兜底填写 · Markdown 编辑器 · 图片粘贴上传 · AI 润色 · 排行榜 · 邮件订阅。<br />
-                  下一步:自定义域名 · 更深的社区讨论 · 移动端优化。
-                </p>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <TechChip icon="⚛️" name="Next.js 15" desc="React 19 + TypeScript" />
+            <TechChip icon="💾" name="Supabase" desc="Postgres · 16 表" />
+            <TechChip icon="🤖" name="AI 4 通道" desc="智谱 · DeepSeek 等" />
+            <TechChip icon="⏰" name="GitHub Actions" desc="30 分钟自动抓取" />
           </div>
 
-          {/* 底部大字总结 */}
-          <div className="mt-16 pt-10 border-t border-dashed border-white/15">
-            <p className="text-center text-2xl md:text-3xl font-black tracking-tight leading-tight max-w-3xl mx-auto text-white/85">
-              技术栈是<em className="accent">路线</em>,不是<em className="accent">目的</em>。<br />
-              <span className="text-lg font-normal text-white/50 mt-2 block">用对的工具做对的事,持续迭代地跑起来。</span>
+          <div className="mt-12 pt-8 border-t border-dashed border-white/15 text-center">
+            <p className="text-2xl md:text-3xl font-black tracking-tight leading-tight max-w-2xl mx-auto text-white/85">
+              技术是<em className="accent">路线</em> · 不是<em className="accent">目的</em>。
+            </p>
+            <p className="text-sm text-white/50 mt-3">
+              用对工具 · 持续做下去。
             </p>
           </div>
         </div>
