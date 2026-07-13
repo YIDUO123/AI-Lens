@@ -16,6 +16,6 @@ jobs:
           echo "🚀 触发周报发送…"
           curl -sSf -X GET \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "https://ai-lens-six.vercel.app/api/cron/newsletter" | tee response.json
+            "${{ secrets.PROD_URL }}/api/cron/newsletter" | tee response.json
           echo ""
           echo "✅ 发送完成"

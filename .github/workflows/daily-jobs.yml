@@ -1,0 +1,60 @@
+# 每日 + 每周定时任务(替代 Vercel Cron · 迁 EdgeOne 后主力)
+#
+# 需要 GitHub Secrets:
+#   - CRON_SECRET      · 和 EdgeOne/Vercel env 里同名
+#   - PROD_URL         · 生产域名, 无斜杠结尾
+#                        例:https://ai-lens-xxx.edgeone.pages.dev
+#                        迁 EdgeOne 后改成 EdgeOne 域名
+name: Daily & Weekly Jobs
+
+on:
+  schedule:
+    - cron: '17 8 * * *'   # /api/cron/models      · 每日 16:17 北京
+    - cron: '21 8 * * *'   # /api/cron/daily-picks · 每日 16:21 北京
+    - cron: '7 3 * * 1'    # /api/cron/archive     · 每周一 11:07 北京 · 清旧数据
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '要调用哪个 endpoint(手动触发时用)'
+        required: true
+        type: choice
+        default: 'daily-picks'
+        options:
+          - news
+          - models
+          - daily-picks
+          - archive
+          - newsletter
+
+concurrency:
+  group: daily-jobs
+  cancel-in-progress: false
+
+jobs:
+  hit-endpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 根据 cron 表达式决定 target
+        id: pick
+        run: |
+          SCHED='${{ github.event.schedule }}'
+          MANUAL='${{ github.event.inputs.target }}'
+
+          case "$SCHED" in
+            '17 8 * * *')  TARGET=models ;;
+            '21 8 * * *')  TARGET=daily-picks ;;
+            '7 3 * * 1')   TARGET=archive ;;
+            *)             TARGET="$MANUAL" ;;
+          esac
+
+          if [ -z "$TARGET" ]; then TARGET=daily-picks; fi
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "Target: $TARGET"
+
+      - name: 调用 /api/cron/${{ steps.pick.outputs.target }}
+        run: |
+          curl -sS -f -m 300 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.PROD_URL }}/api/cron/${{ steps.pick.outputs.target }}" \
+            | head -c 2000
+          echo ""
