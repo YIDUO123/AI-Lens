@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Send, Trash2, MessageCircle, LogIn } from 'lucide-react';
 import { postComment, deleteComment, type TargetType } from '@/lib/actions/interactions';
@@ -36,19 +35,19 @@ export function CommentsSection({
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   const isLoggedIn = !!currentUserId;
 
   const submit = () => {
     setError(null);
     if (!body.trim()) return;
+    // EdgeOne 兼容:不用 router.refresh · 直接本地追加返回的新评论
     startTransition(async () => {
       try {
-        await postComment({ targetType, targetId, body, parentId: replyTo || undefined });
+        const newComment = await postComment({ targetType, targetId, body, parentId: replyTo || undefined });
+        setComments((cs) => [...cs, newComment]);
         setBody('');
         setReplyTo(null);
-        router.refresh();
       } catch (e: any) {
         setError(e.message);
       }
@@ -60,8 +59,21 @@ export function CommentsSection({
     startTransition(async () => {
       try {
         await deleteComment(id);
-        setComments((cs) => cs.filter((c) => c.id !== id));
-        router.refresh();
+        // 递归删掉这条 + 所有子回复
+        setComments((cs) => {
+          const toRemove = new Set<string>([id]);
+          let changed = true;
+          while (changed) {
+            changed = false;
+            for (const c of cs) {
+              if (c.parentId && toRemove.has(c.parentId) && !toRemove.has(c.id)) {
+                toRemove.add(c.id);
+                changed = true;
+              }
+            }
+          }
+          return cs.filter((c) => !toRemove.has(c.id));
+        });
       } catch (e: any) {
         alert(e.message);
       }
