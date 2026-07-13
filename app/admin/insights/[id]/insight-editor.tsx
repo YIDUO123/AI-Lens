@@ -142,7 +142,8 @@ export function InsightEditor({ article }: { article: Article }) {
     if (!file.type.startsWith('image/')) { setError('只支持图片文件'); return; }
     setError(null);
     setUploading(true);
-    const placeholder = `![上传中…](${file.name})`;
+    // 用时间戳生成唯一 placeholder · 避免同名文件冲突
+    const placeholder = `![上传中…${Date.now()}](${file.name})`;
     insertAtCursor(placeholder);
     try {
       const fd = new FormData();
@@ -151,9 +152,8 @@ export function InsightEditor({ article }: { article: Article }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
       const md = `![](${data.url})`;
-      // 把 placeholder 换成真 URL
-      setField('body', form.body.replace(placeholder, md).replace(placeholder, md));
-      // 上面那句在闭包里可能拿到旧 form.body,兜底再直接 setForm
+      // 关键:用函数式 setForm · 从最新的 f.body 里替换 placeholder
+      // 不能用 form.body(闭包旧值 · 不含 placeholder)
       setForm((f) => ({ ...f, body: f.body.replace(placeholder, md) }));
       setToast('✓ 图片已上传');
       setTimeout(() => setToast(null), 2000);
