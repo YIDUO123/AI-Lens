@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { getFamilyTimeline, getFamilyCounts } from '@/lib/db/queries';
 import { Suspense } from 'react';
 
+export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
+
 export const revalidate = 300; // 5 分钟 · 你内容不是分钟级更新的
 
 type SP = { fam?: string };

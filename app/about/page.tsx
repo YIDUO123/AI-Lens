@@ -4,6 +4,8 @@ import { unstable_cache } from 'next/cache';
 import { db, articles, teardowns, timelineVersions } from '@/db';
 import { sql, eq } from 'drizzle-orm';
 
+export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
+
 export const revalidate = 300; // 5 分钟 · 你内容不是分钟级更新的
 
 // 3 个 count 查询 · 缓存 10 分钟 · 反正是 manifesto 数字, 不追求分钟级新鲜

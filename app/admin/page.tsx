@@ -10,6 +10,8 @@ import { sql, eq } from 'drizzle-orm';
 import Link from 'next/link';
 import { FileText, BookOpen, Rocket, Star, Newspaper, ArrowRight, Database, ExternalLink, User as UserIcon, Coffee } from 'lucide-react';
 
+export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
+
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {

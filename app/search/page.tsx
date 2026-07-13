@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { searchAll } from '@/lib/db/queries';
 import { Search, FileText, BookOpen, Rocket, Newspaper } from 'lucide-react';
 
+export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
+
 export const dynamic = 'force-dynamic';
 export const metadata = { title: '搜索', description: '搜索 AI Lens 全站内容' };
 

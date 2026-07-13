@@ -5,6 +5,8 @@ import { CollectForm } from './collect-form';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
+export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
+
 export const dynamic = 'force-dynamic';
 
 export default async function CollectPage() {

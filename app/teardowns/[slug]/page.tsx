@@ -9,6 +9,8 @@ import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
 import { CommentsSection } from '@/components/interactions/comments-section';
 
+export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
+
 export const revalidate = 300; // 5 分钟 · 你内容不是分钟级更新的
 
 const CAT_LABEL: Record<string, string> = {

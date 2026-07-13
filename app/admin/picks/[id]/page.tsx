@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { PickEditor } from './pick-editor';
 
+export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
+
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // AI 兜底生成可能要 20-30 秒 · Hobby 免费版上限 60 秒
 

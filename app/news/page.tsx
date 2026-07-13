@@ -13,6 +13,8 @@ import { ReportTabs } from '@/components/news/report-tabs';
 import { ReportContainer } from '@/components/news/report-container';
 import { NewsTimeline } from '@/components/news/news-timeline';
 
+export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
+
 export const revalidate = 60;
 
 type SP = { tab?: string; cat?: string; fam?: string };
