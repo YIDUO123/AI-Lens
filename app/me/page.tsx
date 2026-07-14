@@ -154,13 +154,13 @@ function EmptyState({ hint, linkHref, linkLabel, tail }: { hint: string; linkHre
 }
 
 function SubGroup({ title, items, kind }: { title: string; items: any[]; kind: 'article' | 'teardown' | 'daily_pick' | 'news_item' }) {
-  // 用 CollapsibleGroup 包一层 · 默认只显示第 1 条 · 剩余折叠 · 点"展开 N 条"看全
+  // 服务端预渲染 items 为 JSX 数组 · 传给客户端 CollapsibleGroup(不能跨 server→client 传函数)
+  const rendered = items.map((it) => <SaveCard key={it.id} it={it} kind={kind} />);
   return (
     <CollapsibleGroup
       title={title}
       count={items.length}
-      items={items}
-      renderItem={(it) => <SaveCard it={it} kind={kind} />}
+      renderedItems={rendered}
     />
   );
 }

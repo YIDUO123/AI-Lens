@@ -3,6 +3,8 @@
 /**
  * /me 页里可折叠的交互分组
  * 默认只显示第 1 条 · 点"展开"看剩余
+ *
+ * ⚠️ Server → Client 不能传函数 · 所以 items 用**预渲染的 JSX 数组**接
  */
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -10,18 +12,14 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 export function CollapsibleGroup({
   title,
   count,
-  children,
-  items,
-  renderItem,
+  renderedItems,
 }: {
   title: string;
   count: number;
-  children?: React.ReactNode;
-  items?: any[];
-  renderItem?: (item: any) => React.ReactNode;
+  renderedItems: React.ReactNode[]; // 服务端已渲染的 JSX 数组
 }) {
   const [expanded, setExpanded] = useState(false);
-  const list = items || [];
+  const list = renderedItems || [];
 
   const visible = expanded ? list : list.slice(0, 1);
   const hidden = Math.max(0, list.length - 1);
@@ -46,7 +44,7 @@ export function CollapsibleGroup({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {renderItem ? visible.map((it, i) => <div key={i}>{renderItem(it)}</div>) : children}
+        {visible.map((el, i) => <div key={i}>{el}</div>)}
       </div>
     </div>
   );
