@@ -7,6 +7,7 @@ import { MarkdownContent } from '@/components/content/markdown-content';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
+import { ViewBeacon } from '@/components/interactions/view-beacon';
 import { CommentsSection } from '@/components/interactions/comments-section';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
@@ -37,6 +38,7 @@ export default async function TeardownDetail({ params }: { params: Promise<{ slu
 
   return (
     <div className="container max-w-3xl py-10 pb-20">
+      <ViewBeacon targetType="teardown" targetId={t.id} />
       <Link href="/teardowns#library" className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-soft hover:text-coral mb-6">
         <ArrowLeft className="w-4 h-4" /> 返回拆解库
       </Link>

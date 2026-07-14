@@ -8,6 +8,7 @@ import { MarkdownContent } from '@/components/content/markdown-content';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
 import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
+import { ViewBeacon } from '@/components/interactions/view-beacon';
 import { CommentsSection } from '@/components/interactions/comments-section';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
@@ -92,6 +93,7 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
 
   return (
     <div className="container max-w-3xl py-10 pb-20">
+      <ViewBeacon targetType="article" targetId={article.id} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <Link href="/insights" className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-soft hover:text-coral mb-6">

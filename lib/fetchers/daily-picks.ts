@@ -71,11 +71,11 @@ export async function fetchAndStoreDailyPicks(targetCount = 10) {
         externalId,
         score: Math.min(100, it.score || 0),
         pickedAt: new Date(),
-        // 6 维留空
+        // 6 维留空 · 但直接发布 · admin 可随时进 /admin/picks 补/改/删
         positioning: null, painPoint: null, solution: null,
         designHighlight: null, vibeCoding: null, commercial: null,
         consensus: null, criticism: null, editorTake: null,
-        isDraft: true,
+        isDraft: false,   // ← 抓完直接上线 · 不再堆积草稿
       });
     } catch (e) {
       continue;

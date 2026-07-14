@@ -11,6 +11,7 @@ type OgData = {
   image: string;
   siteName: string;
   author: string;
+  body: string;
 };
 
 export function CollectForm() {
@@ -32,6 +33,15 @@ export function CollectForm() {
       try {
         const data = await fetchOgMetadata(url);
         setOg(data);
+        // 抓到的正文自动填入下方 body 输入框 · 作为你补评注的底稿
+        if (data.body) {
+          setBody(
+            `> 来源: [${data.siteName}](${url})${data.author ? ' · ' + data.author : ''}\n\n` +
+            `${data.body}\n\n` +
+            `---\n\n` +
+            `## ✍️ AI Lens 编辑视角\n\n(在这里补充你的 PM 观点 · 为什么值得看 · 有哪些启发)\n`
+          );
+        }
       } catch (e: any) {
         setError(e.message);
       }

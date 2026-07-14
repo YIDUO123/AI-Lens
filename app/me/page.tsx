@@ -6,6 +6,8 @@ import { eq, sql } from 'drizzle-orm';
 import { getUserSaves, getUserLikes } from '@/lib/db/queries';
 import Link from 'next/link';
 import { Bookmark, Heart, MessageCircle, Settings, ArrowRight, Sparkles, ExternalLink } from 'lucide-react';
+import { AvatarUpload } from './avatar-upload';
+import { CollapsibleGroup } from './collapsible-group';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
 
@@ -35,13 +37,7 @@ export default async function MePage() {
         <div className="absolute -top-14 -right-14 w-52 h-52 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.18),transparent_70%)] pointer-events-none" />
 
         <div className="grid grid-cols-[80px_1fr_auto] gap-5 items-center relative">
-          {user.image ? (
-            <img src={user.image} alt="" className="w-20 h-20 rounded-full object-cover border-2 border-ink" />
-          ) : (
-            <div className="w-20 h-20 rounded-full border-2 border-ink bg-gradient-to-br from-coral to-gold grid place-items-center text-white font-black text-3xl">
-              {user.name?.[0]?.toUpperCase() || '?'}
-            </div>
-          )}
+          <AvatarUpload currentImage={user.image || null} userName={user.name || 'U'} />
           <div>
             <h1 className="text-3xl font-black tracking-tight leading-none mb-1.5">{user.name}</h1>
             <div className="text-sm text-ink-soft mb-2">{user.email}</div>
@@ -158,13 +154,14 @@ function EmptyState({ hint, linkHref, linkLabel, tail }: { hint: string; linkHre
 }
 
 function SubGroup({ title, items, kind }: { title: string; items: any[]; kind: 'article' | 'teardown' | 'daily_pick' | 'news_item' }) {
+  // 用 CollapsibleGroup 包一层 · 默认只显示第 1 条 · 剩余折叠 · 点"展开 N 条"看全
   return (
-    <div>
-      <h3 className="text-xs font-black tracking-widest uppercase text-ink-soft mb-2.5">{title} · {items.length}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {items.map((it) => <SaveCard key={it.id} it={it} kind={kind} />)}
-      </div>
-    </div>
+    <CollapsibleGroup
+      title={title}
+      count={items.length}
+      items={items}
+      renderItem={(it) => <SaveCard it={it} kind={kind} />}
+    />
   );
 }
 

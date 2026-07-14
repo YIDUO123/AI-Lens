@@ -140,3 +140,26 @@ export async function deleteComment(commentId: string) {
   await db.delete(comments).where(eq(comments.id, commentId));
   return { ok: true };
 }
+
+// ============================================================
+// View · 阅读量 · 客户端 mount 时 beacon 一次
+// 简单实现:不去重 · 无 IP fingerprint · 小站够用
+// 如果想去重:未来加 Redis 或 session cookie 存 last-viewed
+// ============================================================
+import { db as dbInc, articles as artT, teardowns as teardT } from '@/db';
+import { sql as sqlInc } from 'drizzle-orm';
+
+export async function incrementView(targetType: 'article' | 'teardown', targetId: string) {
+  if (!targetId || !['article', 'teardown'].includes(targetType)) return { ok: false };
+  // 不检查登录 · 允许游客计数
+  try {
+    if (targetType === 'article') {
+      await dbInc.update(artT).set({ viewCount: sqlInc`${artT.viewCount} + 1` }).where(sqlInc`${artT.id} = ${targetId}`);
+    } else {
+      await dbInc.update(teardT).set({ viewCount: sqlInc`${teardT.viewCount} + 1` }).where(sqlInc`${teardT.id} = ${targetId}`);
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
