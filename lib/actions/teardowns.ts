@@ -10,7 +10,7 @@ import { headers } from 'next/headers';
 import { db, teardowns } from '@/db';
 import { eq, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { generateWithAI } from '@/lib/ai/gemini';
 
 async function requireEditor() {
@@ -76,8 +76,17 @@ export async function updateTeardown(
 ): Promise<void> {
   await requireEditor();
   await db.update(teardowns).set({ ...patch, updatedAt: new Date() }).where(eq(teardowns.id, id));
+
+  // 拿 slug 清详情页缓存
+  const [row] = await db.select({ slug: teardowns.slug }).from(teardowns).where(eq(teardowns.id, id)).limit(1);
+
+  revalidateTag('teardowns');
   revalidatePath('/admin/teardowns');
   revalidatePath(`/admin/teardowns/${id}`);
+  if (row && !row.slug.startsWith('draft-')) {
+    revalidatePath('/teardowns');
+    revalidatePath(`/teardowns/${row.slug}`);
+  }
 }
 
 // ============================================================
@@ -105,9 +114,11 @@ export async function publishTeardown(id: string, patch?: Parameters<typeof upda
     updatedAt: new Date(),
   }).where(eq(teardowns.id, id));
 
+  revalidateTag('teardowns');
   revalidatePath('/teardowns');
   revalidatePath(`/teardowns/${finalSlug}`);
   revalidatePath('/admin/teardowns');
+  revalidatePath(`/admin/teardowns/${id}`);
 }
 
 // ============================================================

@@ -9,7 +9,7 @@ import { headers } from 'next/headers';
 import { db, articles } from '@/db';
 import { eq, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { generateWithAI } from '@/lib/ai/gemini';
 
 async function requireEditor() {
@@ -80,8 +80,18 @@ export async function updateInsight(
     .update(articles)
     .set({ ...patch, updatedAt: new Date() })
     .where(eq(articles.id, id));
+
+  // 拿到 slug 用于 revalidate 公开详情页
+  const [row] = await db.select({ slug: articles.slug, isDraft: articles.isDraft }).from(articles).where(eq(articles.id, id)).limit(1);
+
+  // 3 层缓存全清
+  revalidateTag('articles');                // unstable_cache tag(getArticleBySlug 等)
   revalidatePath('/admin/insights');
   revalidatePath(`/admin/insights/${id}`);
+  if (row && !row.isDraft) {
+    revalidatePath('/insights');
+    revalidatePath(`/insights/${row.slug}`);
+  }
 }
 
 // ============================================================
@@ -119,9 +129,12 @@ export async function publishInsight(id: string, patch?: Parameters<typeof updat
     })
     .where(eq(articles.id, id));
 
+  // 3 层缓存全清
+  revalidateTag('articles');
   revalidatePath('/insights');
   revalidatePath(`/insights/${finalSlug}`);
   revalidatePath('/admin/insights');
+  revalidatePath(`/admin/insights/${id}`);
 }
 
 // ============================================================
@@ -129,11 +142,14 @@ export async function publishInsight(id: string, patch?: Parameters<typeof updat
 // ============================================================
 export async function unpublishInsight(id: string): Promise<void> {
   await requireEditor();
+  const [row] = await db.select({ slug: articles.slug }).from(articles).where(eq(articles.id, id)).limit(1);
   await db
     .update(articles)
     .set({ isDraft: true, updatedAt: new Date() })
     .where(eq(articles.id, id));
+  revalidateTag('articles');
   revalidatePath('/insights');
+  if (row) revalidatePath(`/insights/${row.slug}`);
   revalidatePath('/admin/insights');
 }
 
