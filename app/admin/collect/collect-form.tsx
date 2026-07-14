@@ -31,7 +31,12 @@ export function CollectForm() {
     if (!url) return;
     startTransition(async () => {
       try {
-        const data = await fetchOgMetadata(url);
+        const result = await fetchOgMetadata(url);
+        if (!result.ok) {
+          setError(result.error);
+          return;
+        }
+        const data = result.data;
         setOg(data);
         // 抓到的正文自动填入下方 body 输入框 · 作为你补评注的底稿
         if (data.body) {
@@ -43,7 +48,8 @@ export function CollectForm() {
           );
         }
       } catch (e: any) {
-        setError(e.message);
+        // 兜底 · 理论上 fetchOgMetadata 不再抛错 · 但如果网络挂/RSC 挂也接住
+        setError('抓取失败:' + (e?.message || '未知错误 · 请稍后再试'));
       }
     });
   };

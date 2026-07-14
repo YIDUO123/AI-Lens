@@ -20,108 +20,114 @@ async function requireEditor() {
 // ============================================================
 // URL 采集 · 抓外部页面 OG 元数据
 // ============================================================
-export async function fetchOgMetadata(url: string): Promise<{
-  title: string;
-  description: string;
-  image: string;
-  siteName: string;
-  author: string;
-  body: string;
-}> {
-  await requireEditor();
-  if (!/^https?:\/\//i.test(url)) throw new Error('URL 必须以 http(s) 开头');
+/**
+ * 抓取 URL 元数据 + 正文 · 永不抛错版
+ * 返回 { ok: true, data: {...} } 或 { ok: false, error: '错误说明' }
+ * 客户端根据 ok 分支处理 · 不会触发 RSC render 崩溃
+ */
+export async function fetchOgMetadata(url: string): Promise<
+  | { ok: true; data: { title: string; description: string; image: string; siteName: string; author: string; body: string } }
+  | { ok: false; error: string }
+> {
+  // ---------- 前置校验 ----------
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return { ok: false, error: '未登录' };
+    const role = (session.user as any).role || 'reader';
+    if (role !== 'admin' && role !== 'editor') return { ok: false, error: '无权限' };
+  } catch (e: any) {
+    return { ok: false, error: '认证失败:' + (e?.message || 'unknown') };
+  }
 
-  // 更真实的浏览器 User-Agent · 绕过一部分反爬(如 CSDN)
+  if (!url || !/^https?:\/\//i.test(url)) {
+    return { ok: false, error: 'URL 必须以 http(s) 开头' };
+  }
+
   const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
-  // 用 Promise.allSettled · 任何一个失败都不 abort 另一个
-  const [ogRes, bodyRes] = await Promise.allSettled([
-    fetch(url, {
-      headers: {
-        'User-Agent': UA,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-      },
-      signal: AbortSignal.timeout(15000),
-      redirect: 'follow',
-    }),
-    fetch(`https://r.jina.ai/${url}`, {
-      headers: { 'Accept': 'text/plain', 'X-With-Generated-Alt': 'true' },
-      signal: AbortSignal.timeout(30000),
-    }),
-  ]);
-
-  // ---------- 解析 OG 元数据(容错版) ----------
-  let title = '';
-  let description = '';
-  let image = '';
-  let siteName = '';
-  let author = '';
-  let html = '';
-
-  if (ogRes.status === 'fulfilled' && ogRes.value.ok) {
+  // ---------- 双通道并行抓取 · 每个都在 try 里独立 ----------
+  const fetchHtml = async (): Promise<string> => {
     try {
-      html = await ogRes.value.text();
-      const pick = (re: RegExp): string => {
-        const m = html.match(re);
-        return (m?.[1] || '').trim().slice(0, 500);
-      };
-      title =
-        pick(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i) ||
-        pick(/<meta\s+name=["']twitter:title["']\s+content=["']([^"']+)["']/i) ||
-        pick(/<title>([^<]+)<\/title>/i);
-      description =
-        pick(/<meta\s+property=["']og:description["']\s+content=["']([^"']+)["']/i) ||
-        pick(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i) ||
-        pick(/<meta\s+name=["']twitter:description["']\s+content=["']([^"']+)["']/i);
-      image =
-        pick(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
-        pick(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
-      siteName = pick(/<meta\s+property=["']og:site_name["']\s+content=["']([^"']+)["']/i);
-      author =
-        pick(/<meta\s+name=["']author["']\s+content=["']([^"']+)["']/i) ||
-        pick(/<meta\s+property=["']article:author["']\s+content=["']([^"']+)["']/i);
-    } catch {}
-  }
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': UA,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        },
+        signal: AbortSignal.timeout(15000),
+        redirect: 'follow',
+      });
+      if (!res.ok) return '';
+      const text = await res.text();
+      return text.slice(0, 500000); // 硬截到 500KB · 防 OOM
+    } catch { return ''; }
+  };
 
-  // ---------- 解析正文(Jina Reader · 容错版) ----------
-  let body = '';
-  if (bodyRes.status === 'fulfilled' && bodyRes.value.ok) {
+  const fetchJinaBody = async (): Promise<string> => {
     try {
-      const raw = await bodyRes.value.text();
-      // Jina 头部元信息剥掉
-      body = raw
-        .replace(/^Title:\s*.+?\nURL Source:\s*.+?\n(?:Published Time:.*?\n)?(?:Markdown Content:\s*\n)?/is, '')
+      const res = await fetch(`https://r.jina.ai/${url}`, {
+        headers: { 'Accept': 'text/plain' },
+        signal: AbortSignal.timeout(25000),
+      });
+      if (!res.ok) return '';
+      const text = await res.text();
+      // 头部元信息剥掉
+      return text
+        .replace(/^Title:\s*.+?\n(?:URL Source:\s*.+?\n)?(?:Published Time:.*?\n)?(?:Markdown Content:\s*\n)?/is, '')
         .trim()
-        .slice(0, 20000);
-      // 如果 Jina 抓到了标题但 OG 没抓到 · 用 Jina 的
-      if (!title) {
-        const jinaTitleMatch = raw.match(/^Title:\s*(.+?)$/im);
-        if (jinaTitleMatch) title = jinaTitleMatch[1].trim().slice(0, 200);
-      }
-    } catch {}
-  }
+        .slice(0, 8000); // 8k 字符上限 · 防 RSC payload 过大
+    } catch { return ''; }
+  };
 
-  // ---------- 兜底 ----------
+  const [html, body] = await Promise.all([fetchHtml(), fetchJinaBody()]);
+
+  // ---------- 解析 OG(所有异常兜住)----------
+  let title = '', description = '', image = '', siteName = '', author = '';
+  try {
+    const pick = (re: RegExp): string => {
+      const m = html.match(re);
+      return (m?.[1] || '').trim().slice(0, 300);
+    };
+    title =
+      pick(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i) ||
+      pick(/<meta\s+name=["']twitter:title["']\s+content=["']([^"']+)["']/i) ||
+      pick(/<title>([^<]+)<\/title>/i);
+    description =
+      pick(/<meta\s+property=["']og:description["']\s+content=["']([^"']+)["']/i) ||
+      pick(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
+    image =
+      pick(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
+      pick(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
+    siteName = pick(/<meta\s+property=["']og:site_name["']\s+content=["']([^"']+)["']/i);
+    author =
+      pick(/<meta\s+name=["']author["']\s+content=["']([^"']+)["']/i) ||
+      pick(/<meta\s+property=["']article:author["']\s+content=["']([^"']+)["']/i);
+  } catch {}
+
+  // 域名兜底
   if (!siteName) {
     try { siteName = new URL(url).hostname.replace(/^www\./, ''); } catch { siteName = 'external'; }
   }
 
-  // ---------- 最终校验:如果啥都没抓到 · 明确告诉用户 ----------
+  // ---------- 判断成功与否 ----------
   if (!title && !body) {
-    throw new Error(
-      `抓取失败 · 这个网站可能有反爬保护(常见于 CSDN · 微信 · 知乎)。\n` +
-      `建议:1) 手动填写下面的字段  2) 换 medium/substack/github 等开放平台的链接`
-    );
+    return {
+      ok: false,
+      error: '抓取失败 · 这个网站可能有反爬保护(CSDN / 微信 / 知乎常见)。请手动填写下方字段,或换 GitHub / Medium / Substack 等开放平台的链接。',
+    };
   }
 
+  // ---------- 成功返回 ----------
   return {
-    title: unescapeHtml(title || '无标题'),
-    description: unescapeHtml(description),
-    image,
-    siteName: unescapeHtml(siteName),
-    author: unescapeHtml(author),
-    body,
+    ok: true,
+    data: {
+      title: unescapeHtml(title || '无标题').slice(0, 200),
+      description: unescapeHtml(description).slice(0, 500),
+      image: image.slice(0, 500),
+      siteName: unescapeHtml(siteName).slice(0, 100),
+      author: unescapeHtml(author).slice(0, 100),
+      body,
+    },
   };
 }
 
