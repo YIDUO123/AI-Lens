@@ -96,8 +96,8 @@ export default async function AdminPage() {
             <AdminLink href="/admin/picks"     icon="🌟" label="每日精选编辑器"   badge={`补 6 维 · AI 兜底`} coral />
             <AdminLink href="/admin/insights"  icon="✍️" label="洞察长文编辑器"   badge={`Markdown 双栏 · 实时预览 · ${a.n} 篇`} coral />
             <AdminLink href="/admin/collect"   icon="🔗" label="URL 观点采集器"   badge="外部观点 + 你的评注" />
-            <ContentShortcut label="产品拆解(直改 DB)" table="teardowns" count={t.n} />
-            <ContentShortcut label="迭代版本(直改 DB)" table="timeline_versions" count={tv.n} />
+            <AdminLink href="/admin/teardowns" icon="🔬" label="产品拆解编辑器"   badge={`Markdown 双栏 · ${t.n} 篇`} coral />
+            <AdminLink href="/admin/timeline"  icon="🔄" label="时间线快速添加"   badge={`一屏表单 · ${tv.n} 版本`} coral />
           </div>
         </section>
 
