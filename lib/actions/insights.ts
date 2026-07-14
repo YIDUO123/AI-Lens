@@ -7,7 +7,7 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { db, articles } from '@/db';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { revalidatePath } from 'next/cache';
 import { generateWithAI } from '@/lib/ai/gemini';
@@ -145,6 +145,17 @@ export async function deleteInsight(id: string): Promise<void> {
   await db.delete(articles).where(eq(articles.id, id));
   revalidatePath('/insights');
   revalidatePath('/admin/insights');
+}
+
+/** 批量删除洞察 · admin 快速清理 */
+export async function bulkDeleteInsights(ids: string[]): Promise<{ deleted: number }> {
+  await requireEditor();
+  if (!Array.isArray(ids) || ids.length === 0) return { deleted: 0 };
+  const cleanIds = ids.filter((x) => typeof x === 'string' && x.length > 0).slice(0, 200);
+  await db.delete(articles).where(inArray(articles.id, cleanIds));
+  revalidatePath('/insights');
+  revalidatePath('/admin/insights');
+  return { deleted: cleanIds.length };
 }
 
 // ============================================================

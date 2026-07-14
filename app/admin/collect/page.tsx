@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
-
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Jina Reader 抓大页面可能要 20-30 秒
 
 export default async function CollectPage() {
   const session = await auth.api.getSession({ headers: await headers() });

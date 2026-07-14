@@ -8,7 +8,7 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { db, teardowns } from '@/db';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { revalidatePath } from 'next/cache';
 import { generateWithAI } from '@/lib/ai/gemini';
@@ -118,6 +118,17 @@ export async function deleteTeardown(id: string): Promise<void> {
   await db.delete(teardowns).where(eq(teardowns.id, id));
   revalidatePath('/teardowns');
   revalidatePath('/admin/teardowns');
+}
+
+/** 批量删除拆解 */
+export async function bulkDeleteTeardowns(ids: string[]): Promise<{ deleted: number }> {
+  await requireEditor();
+  if (!Array.isArray(ids) || ids.length === 0) return { deleted: 0 };
+  const cleanIds = ids.filter((x) => typeof x === 'string' && x.length > 0).slice(0, 200);
+  await db.delete(teardowns).where(inArray(teardowns.id, cleanIds));
+  revalidatePath('/teardowns');
+  revalidatePath('/admin/teardowns');
+  return { deleted: cleanIds.length };
 }
 
 // ============================================================
