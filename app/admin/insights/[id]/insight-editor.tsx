@@ -439,31 +439,36 @@ export function InsightEditor({ article }: { article: Article }) {
         </button>
 
         <div className="flex items-center gap-2">
+          {/* 已发布状态下 · 撤回到草稿 · 次要按钮 */}
+          {!article.isDraft && (
+            <button
+              onClick={doUnpublish}
+              disabled={savePending}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-800 border-2 border-amber-500 rounded-lg text-sm font-bold hover:bg-amber-200 disabled:opacity-50"
+            >
+              <Undo className="w-3.5 h-3.5" /> 撤回到草稿
+            </button>
+          )}
+
+          {/* 保存 · 次要 */}
           <button
             onClick={doSave}
             disabled={savePending}
             className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border-2 border-ink rounded-lg text-sm font-bold disabled:opacity-50 hover:bg-bg-alt"
           >
             {savePending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            保存草稿
+            {article.isDraft ? '保存草稿' : '仅保存(不发布)'}
           </button>
-          {article.isDraft ? (
-            <button
-              onClick={doPublish}
-              disabled={savePending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-coral text-white border-2 border-ink rounded-lg text-sm font-bold shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition disabled:opacity-50"
-            >
-              <Send className="w-4 h-4" /> 保存并发布
-            </button>
-          ) : (
-            <button
-              onClick={doUnpublish}
-              disabled={savePending}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-100 text-amber-800 border-2 border-amber-500 rounded-lg text-sm font-bold hover:bg-amber-200 disabled:opacity-50"
-            >
-              <Undo className="w-4 h-4" /> 撤回到草稿
-            </button>
-          )}
+
+          {/* 主按钮:草稿 → 发布 · 已发布 → 保存并更新 */}
+          <button
+            onClick={doPublish}
+            disabled={savePending}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-coral text-white border-2 border-ink rounded-lg text-sm font-bold shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition disabled:opacity-50"
+          >
+            <Send className="w-4 h-4" />
+            {article.isDraft ? '保存并发布' : '保存并更新'}
+          </button>
         </div>
       </div>
     </div>
