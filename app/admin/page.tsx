@@ -98,6 +98,7 @@ export default async function AdminPage() {
             <AdminLink href="/admin/collect"   icon="🔗" label="URL 观点采集器"   badge="外部观点 + 你的评注" />
             <AdminLink href="/admin/teardowns" icon="🔬" label="产品拆解编辑器"   badge={`Markdown 双栏 · ${t.n} 篇`} coral />
             <AdminLink href="/admin/timeline"  icon="🔄" label="时间线快速添加"   badge={`一屏表单 · ${tv.n} 版本`} coral />
+            <AdminLink href="/admin/analytics" icon="📊" label="数据面板"           badge="AI · 事件 · 内容 · 一屏看" coral />
           </div>
         </section>
 

@@ -11,6 +11,7 @@ import { eq, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { generateWithAI } from '@/lib/ai/gemini';
+import { logEvent } from '@/lib/analytics/log';
 
 async function requireEditor() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -98,7 +99,7 @@ export async function updateInsight(
 // 发布(草稿 → 正式) · 同步刷新公开路径 slug
 // ============================================================
 export async function publishInsight(id: string, patch?: Parameters<typeof updateInsight>[1]): Promise<void> {
-  await requireEditor();
+  const user = await requireEditor();
 
   // 允许同时接受 patch · 省一次 round trip
   if (patch) {
@@ -135,6 +136,14 @@ export async function publishInsight(id: string, patch?: Parameters<typeof updat
   revalidatePath(`/insights/${finalSlug}`);
   revalidatePath('/admin/insights');
   revalidatePath(`/admin/insights/${id}`);
+
+  // 埋点 · 发布事件
+  logEvent('editor_publish', {
+    type: 'article',
+    slug: finalSlug,
+    category: row.category,
+    body_length: row.body?.length || 0,
+  }, { userId: user.id, path: `/admin/insights/${id}` });
 }
 
 // ============================================================

@@ -38,7 +38,7 @@ export default async function TeardownDetail({ params }: { params: Promise<{ slu
 
   return (
     <div className="container max-w-3xl py-10 pb-20">
-      <ViewBeacon targetType="teardown" targetId={t.id} />
+      <ViewBeacon targetType="teardown" targetId={t.id} slug={t.slug} category={t.category} />
       <Link href="/teardowns#library" className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-soft hover:text-coral mb-6">
         <ArrowLeft className="w-4 h-4" /> 返回拆解库
       </Link>

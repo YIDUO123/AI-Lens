@@ -93,7 +93,7 @@ export default async function InsightDetail({ params }: { params: Promise<{ slug
 
   return (
     <div className="container max-w-3xl py-10 pb-20">
-      <ViewBeacon targetType="article" targetId={article.id} />
+      <ViewBeacon targetType="article" targetId={article.id} slug={article.slug} category={article.category} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <Link href="/insights" className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-soft hover:text-coral mb-6">

@@ -12,6 +12,7 @@ import { eq, inArray } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { generateWithAI } from '@/lib/ai/gemini';
+import { logEvent } from '@/lib/analytics/log';
 
 async function requireEditor() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -93,7 +94,7 @@ export async function updateTeardown(
 // 发布(slug 生成 + publishedAt 更新)
 // ============================================================
 export async function publishTeardown(id: string, patch?: Parameters<typeof updateTeardown>[1]): Promise<void> {
-  await requireEditor();
+  const user = await requireEditor();
   if (patch) {
     await db.update(teardowns).set({ ...patch, updatedAt: new Date() }).where(eq(teardowns.id, id));
   }
@@ -119,6 +120,14 @@ export async function publishTeardown(id: string, patch?: Parameters<typeof upda
   revalidatePath(`/teardowns/${finalSlug}`);
   revalidatePath('/admin/teardowns');
   revalidatePath(`/admin/teardowns/${id}`);
+
+  // 埋点 · 发布事件
+  logEvent('editor_publish', {
+    type: 'teardown',
+    slug: finalSlug,
+    category: row.category,
+    body_length: row.body?.length || 0,
+  }, { userId: user.id, path: `/admin/teardowns/${id}` });
 }
 
 // ============================================================
