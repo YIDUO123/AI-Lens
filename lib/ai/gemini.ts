@@ -139,10 +139,21 @@ async function callGemini(prompt: string, opts: { temperature: number; maxTokens
 }
 
 /**
- * 主入口:按优先级依次尝试三家 AI 服务
+ * 主入口:按优先级依次尝试 4 家 AI 服务 · 全埋点
+ * 每次 provider 调用都记录到 ai_call_logs · 无论成败
+ * 埋点是 fire-and-forget · 不阻塞主流程
  */
-export async function generateWithAI(prompt: string, opts?: { temperature?: number; maxTokens?: number }): Promise<string> {
+export async function generateWithAI(
+  prompt: string,
+  opts?: { temperature?: number; maxTokens?: number; useCase?: string },
+): Promise<string> {
+  // 延迟 require · 避免循环依赖(gemini.ts 被 client-only 组件间接引用时)
+  // 使用 dynamic import 兜住
+  const { logAiCall } = await import('@/lib/analytics/log').catch(() => ({ logAiCall: () => {} }));
+
   const params = { temperature: opts?.temperature ?? 0.7, maxTokens: opts?.maxTokens ?? 2048 };
+  const useCase = (opts?.useCase || 'unknown').slice(0, 50);
+  const inputLength = prompt.length;
   const hasDeepSeek = !!process.env.DEEPSEEK_API_KEY;
   const hasZhipu = !!process.env.ZHIPU_API_KEY;
   const hasGroq = !!process.env.GROQ_API_KEY;
@@ -152,25 +163,57 @@ export async function generateWithAI(prompt: string, opts?: { temperature?: numb
     throw new Error('未配置 AI 服务 · 请在 Vercel env 设置 DEEPSEEK_API_KEY / ZHIPU_API_KEY / GROQ_API_KEY / GEMINI_API_KEY 中的至少一个');
   }
 
+  // 通用尝试执行器:计时 + 埋点
+  const tryProvider = async (
+    provider: 'deepseek' | 'zhipu' | 'groq' | 'gemini',
+    fn: () => Promise<string>,
+    attemptsCount: number,
+  ): Promise<string> => {
+    const t0 = Date.now();
+    try {
+      const text = await fn();
+      logAiCall({
+        useCase, provider, success: true, attemptsCount,
+        durationMs: Date.now() - t0,
+        inputLength, outputLength: text.length,
+        errorCode: null,
+      });
+      return text;
+    } catch (e: any) {
+      logAiCall({
+        useCase, provider, success: false, attemptsCount,
+        durationMs: Date.now() - t0,
+        inputLength, outputLength: 0,
+        errorCode: (e?.message || 'unknown').slice(0, 200),
+      });
+      throw e;
+    }
+  };
+
   const errors: string[] = [];
+  let attempts = 0;
 
   if (hasDeepSeek) {
-    try { return await callDeepSeek(prompt, params); }
+    attempts++;
+    try { return await tryProvider('deepseek', () => callDeepSeek(prompt, params), attempts); }
     catch (e: any) { errors.push('DeepSeek: ' + e.message); }
   }
 
   if (hasZhipu) {
-    try { return await callZhipu(prompt, params); }
+    attempts++;
+    try { return await tryProvider('zhipu', () => callZhipu(prompt, params), attempts); }
     catch (e: any) { errors.push('Zhipu: ' + e.message); }
   }
 
   if (hasGroq) {
-    try { return await callGroq(prompt, params); }
+    attempts++;
+    try { return await tryProvider('groq', () => callGroq(prompt, params), attempts); }
     catch (e: any) { errors.push('Groq: ' + e.message); }
   }
 
   if (hasGemini) {
-    try { return await callGemini(prompt, params); }
+    attempts++;
+    try { return await tryProvider('gemini', () => callGemini(prompt, params), attempts); }
     catch (e: any) { errors.push('Gemini: ' + e.message); }
   }
 
@@ -222,7 +265,7 @@ export async function generatePickAnalysis(pick: {
 
 只输出 JSON。`;
 
-  const raw = await generateWithAI(prompt, { temperature: 0.6, maxTokens: 4096 });
+  const raw = await generateWithAI(prompt, { temperature: 0.6, maxTokens: 4096, useCase: 'pick_analysis' });
   try {
     const cleaned = raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     return JSON.parse(cleaned);

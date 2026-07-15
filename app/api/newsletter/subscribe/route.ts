@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, newsletterSubscribers } from '@/db';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
+import { logEvent } from '@/lib/analytics/log';
 
 export const runtime = 'nodejs';
 
@@ -38,6 +39,8 @@ export async function POST(req: NextRequest) {
       .update(newsletterSubscribers)
       .set({ active: true, source })
       .where(eq(newsletterSubscribers.email, email));
+    // 埋点 · 复活订阅
+    logEvent('newsletter_resubscribe', { source }, { path: '/api/newsletter/subscribe' });
     return NextResponse.json({ ok: true, message: '欢迎回来 · 已重新订阅' });
   }
 
@@ -49,6 +52,9 @@ export async function POST(req: NextRequest) {
     active: true,
     verified: true,
   });
+
+  // 埋点 · 首次订阅
+  logEvent('newsletter_subscribe', { source, is_new: true }, { path: '/api/newsletter/subscribe' });
 
   return NextResponse.json({ ok: true, message: '订阅成功 · 每周日晚 8 点给你发信' });
 }

@@ -167,7 +167,7 @@ ${clean}
 请输出:
 { "polished": "润色后的文字" }`;
 
-  const raw = await generateWithAI(prompt, { temperature: 0.5, maxTokens: 3000 });
+  const raw = await generateWithAI(prompt, { temperature: 0.5, maxTokens: 3000, useCase: 'polish_teardown' });
   try {
     const cleaned = raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     const parsed = JSON.parse(cleaned);

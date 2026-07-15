@@ -7,6 +7,7 @@
  */
 import { useState } from 'react';
 import { Mail, Loader2, Check } from 'lucide-react';
+import { track } from '@/lib/analytics/track-client';
 
 export function NewsletterForm({ source = 'unknown', compact = false }: { source?: string; compact?: boolean }) {
   const [email, setEmail] = useState('');
@@ -28,9 +29,13 @@ export function NewsletterForm({ source = 'unknown', compact = false }: { source
       setStatus('ok');
       setMsg(data.message || '订阅成功 ✓');
       setEmail('');
+      // 埋点 · 订阅成功 · fire-and-forget
+      track('newsletter_subscribe', { source, compact: !!compact });
     } catch (err: any) {
       setStatus('err');
       setMsg(err.message);
+      // 埋点 · 订阅失败 · 帮助调优表单
+      track('newsletter_subscribe_fail', { source, err_head: (err?.message || '').slice(0, 40) });
     }
   };
 

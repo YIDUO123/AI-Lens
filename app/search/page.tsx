@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { searchAll } from '@/lib/db/queries';
 import { Search, FileText, BookOpen, Rocket, Newspaper } from 'lucide-react';
+import { logEvent, hashString } from '@/lib/analytics/log';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
 
@@ -13,6 +14,17 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const q = (sp.q || '').trim();
   const results = q ? await searchAll(q) : null;
+
+  // 埋点 · 服务端 · fire-and-forget
+  if (q) {
+    const totalResults = results?.total ?? 0;
+    logEvent('search_submit', {
+      query_hash: hashString(q),
+      query_length: q.length,
+      result_count: totalResults,
+      is_empty: totalResults === 0,
+    }, { path: '/search' });
+  }
 
   return (
     <div className="container max-w-4xl py-10 pb-24">

@@ -42,3 +42,6 @@ next-env.d.ts
 .vscode
 .idea
 .env*
+
+# analytics · 本地 dev 日志 · 生产环境静默 fail 不产生
+analytics_events.log

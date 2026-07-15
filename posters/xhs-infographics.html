@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Lens · 信息图 4-7</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #e5e5e5;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+    }
+    .poster {
+      width: 1080px;
+      height: 1440px;
+      background: #fefaf3;
+      color: #1a1a1a;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+    }
+    .brand-tag {
+      display: inline-block;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #ff6b35;
+    }
+    em.accent { font-family: "Times New Roman", "Songti SC", serif; font-style: italic; color: #ff6b35; font-weight: 900; }
+    em.blue   { font-family: "Times New Roman", "Songti SC", serif; font-style: italic; color: #2f6feb; font-weight: 900; }
+    .dots {
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, #1a1a1a 1.2px, transparent 1.2px);
+      background-size: 32px 32px;
+      opacity: 0.06;
+      pointer-events: none;
+    }
+    .url-footer {
+      position: absolute;
+      bottom: 60px; left: 80px; right: 80px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 26px; font-weight: 900; letter-spacing: 1px;
+    }
+    .url-footer .site { color: #ff6b35; }
+    .url-footer .brand { display: flex; align-items: center; gap: 12px; }
+    .lens-logo {
+      width: 44px; height: 44px;
+      border: 3px solid #1a1a1a;
+      border-radius: 50%;
+      position: relative;
+      display: inline-block;
+    }
+    .lens-logo::after {
+      content: ''; position: absolute;
+      width: 16px; height: 16px;
+      background: #ff6b35; border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ==================== POSTER 4 · 数字快照 ==================== */
+    .p4 .kicker { position: absolute; top: 90px; left: 80px; }
+    .p4 h1 {
+      position: absolute; top: 150px; left: 80px; right: 80px;
+      font-size: 96px; font-weight: 900; line-height: 0.98;
+      letter-spacing: -4px;
+    }
+    .p4 .stats-grid {
+      position: absolute; top: 360px; left: 80px; right: 80px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    }
+    .stat-card {
+      background: #fff; border: 3px solid #1a1a1a;
+      border-radius: 20px; padding: 32px 28px;
+      box-shadow: 6px 6px 0 #1a1a1a;
+      position: relative;
+    }
+    .stat-card.coral { background: #ff6b35; color: #fff; }
+    .stat-card.ink   { background: #1a1a1a; color: #fefaf3; }
+    .stat-card .stat-num {
+      font-family: "Times New Roman", serif;
+      font-size: 96px; font-weight: 900;
+      line-height: 1; letter-spacing: -3px;
+      margin-bottom: 12px;
+    }
+    .stat-card .stat-num em { font-style: italic; color: inherit; font-family: inherit; }
+    .stat-card.coral .stat-num em, .stat-card.ink .stat-num em { color: rgba(255,255,255,0.9); }
+    .stat-card .stat-label {
+      font-size: 26px; font-weight: 900; letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .stat-card .stat-sub {
+      font-size: 16px; opacity: 0.65; line-height: 1.3;
+    }
+    .p4 .bottom-band {
+      position: absolute; left: 80px; right: 80px; bottom: 170px;
+      background: linear-gradient(90deg, #1a1a1a 0%, rgba(26,26,26,0.9) 100%);
+      color: #fefaf3;
+      border: 3px solid #1a1a1a;
+      border-radius: 20px;
+      padding: 24px 32px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .p4 .bottom-band .label {
+      font-size: 12px; letter-spacing: 4px; font-weight: 900;
+      color: #ff6b35;
+      margin-bottom: 6px;
+    }
+    .p4 .bottom-band .text { font-size: 22px; font-weight: 900; }
+
+    /* ==================== POSTER 5 · 对比图 ==================== */
+    .p5 .kicker { position: absolute; top: 90px; left: 80px; }
+    .p5 h1 {
+      position: absolute; top: 150px; left: 80px; right: 80px;
+      font-size: 90px; font-weight: 900; line-height: 1.02;
+      letter-spacing: -3px;
+    }
+    .p5 .vs-grid {
+      position: absolute; top: 400px; left: 80px; right: 80px;
+      display: grid; grid-template-columns: 1fr 60px 1fr; gap: 16px;
+      align-items: start;
+    }
+    .vs-col {
+      background: #fff; border: 3px solid #1a1a1a;
+      border-radius: 20px; padding: 32px 28px;
+      box-shadow: 6px 6px 0 #1a1a1a;
+    }
+    .vs-col.bad { background: #f5f0e8; }
+    .vs-col.good { background: #ff6b35; color: #fff; }
+    .vs-col .tag {
+      display: inline-block;
+      background: rgba(26,26,26,0.1);
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 14px; font-weight: 900; letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+    .vs-col.good .tag { background: rgba(255,255,255,0.2); }
+    .vs-col h3 {
+      font-size: 38px; font-weight: 900;
+      line-height: 1.1; letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+    .vs-col ul { list-style: none; }
+    .vs-col li {
+      font-size: 20px; font-weight: 700;
+      line-height: 1.5;
+      padding: 10px 0;
+      border-bottom: 1px dashed rgba(26,26,26,0.15);
+    }
+    .vs-col.good li { border-bottom-color: rgba(255,255,255,0.2); }
+    .vs-col li:last-child { border-bottom: none; }
+    .vs-col li::before { margin-right: 8px; }
+    .vs-col.bad li::before { content: '✗'; color: #999; font-weight: 900; }
+    .vs-col.good li::before { content: '✓'; color: #fff; font-weight: 900; }
+    .vs-divider {
+      display: flex; align-items: center; justify-content: center;
+      padding-top: 100px;
+    }
+    .vs-divider span {
+      background: #1a1a1a; color: #ff6b35;
+      font-size: 24px; font-weight: 900;
+      padding: 12px 8px; border-radius: 50%;
+      width: 60px; height: 60px;
+      display: grid; place-items: center;
+      font-family: "Times New Roman", serif; font-style: italic;
+    }
+
+    /* ==================== POSTER 6 · 技术栈 + 成本 ==================== */
+    .p6 { background: #1a1a1a; color: #fefaf3; }
+    .p6 .dots { background-image: radial-gradient(circle, #fff 1.2px, transparent 1.2px); opacity: 0.05; }
+    .p6 .corner {
+      position: absolute; top: -150px; right: -150px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(255,107,53,0.25) 0%, transparent 65%);
+    }
+    .p6 .kicker { position: absolute; top: 90px; left: 80px; color: #ff6b35; }
+    .p6 h1 {
+      position: absolute; top: 150px; left: 80px; right: 80px;
+      font-size: 90px; font-weight: 900; line-height: 1;
+      letter-spacing: -3px; color: #fefaf3;
+    }
+    .p6 h1 em { color: #ff6b35; font-style: normal; }
+    .p6 .price-card {
+      position: absolute; top: 400px; left: 80px; right: 80px;
+      background: #ff6b35; color: #fefaf3;
+      border-radius: 20px; padding: 40px 44px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .p6 .price-card .label {
+      font-size: 20px; font-weight: 900; letter-spacing: 4px;
+      opacity: 0.85; margin-bottom: 8px;
+    }
+    .p6 .price-card .price {
+      font-family: "Times New Roman", serif;
+      font-size: 108px; font-weight: 900; line-height: 0.9;
+      letter-spacing: -3px;
+    }
+    .p6 .price-card .price em { font-style: italic; color: rgba(255,255,255,0.85); }
+    .p6 .price-card .desc { font-size: 22px; font-weight: 900; text-align: right; line-height: 1.4; }
+    .p6 .stack-grid {
+      position: absolute; top: 680px; left: 80px; right: 80px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .stack-item {
+      background: rgba(255,255,255,0.06);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex; gap: 16px; align-items: center;
+    }
+    .stack-item .icon { font-size: 32px; flex-shrink: 0; }
+    .stack-item .name { font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+    .stack-item .desc { font-size: 15px; opacity: 0.6; line-height: 1.3; }
+    .p6 .url-footer { color: rgba(255,250,243,0.6); }
+    .p6 .url-footer .site { color: rgba(255,250,243,0.6); }
+    .p6 .lens-logo { border-color: #fefaf3; }
+
+    /* ==================== POSTER 7 · 6 维分析框架 ==================== */
+    .p7 .kicker { position: absolute; top: 90px; left: 80px; }
+    .p7 h1 {
+      position: absolute; top: 150px; left: 80px; right: 80px;
+      font-size: 96px; font-weight: 900; line-height: 1;
+      letter-spacing: -4px;
+    }
+    .p7 .sub {
+      position: absolute; top: 340px; left: 80px; right: 80px;
+      font-size: 28px; font-weight: 700; color: #444;
+      line-height: 1.4;
+    }
+    .p7 .sub em { color: #ff6b35; font-style: normal; font-weight: 900; }
+    .p7 .dims {
+      position: absolute; top: 460px; left: 80px; right: 80px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
+    .dim {
+      background: #fff; border: 3px solid #1a1a1a;
+      border-radius: 20px;
+      padding: 28px 26px;
+      box-shadow: 6px 6px 0 #1a1a1a;
+    }
+    .dim .num {
+      display: inline-block;
+      font-family: "Times New Roman", serif;
+      font-size: 24px; font-weight: 900;
+      font-style: italic;
+      color: #ff6b35;
+      margin-bottom: 8px;
+    }
+    .dim .name {
+      font-size: 30px; font-weight: 900;
+      line-height: 1.1; letter-spacing: -1px;
+      margin-bottom: 8px;
+    }
+    .dim .desc {
+      font-size: 16px; color: #666;
+      line-height: 1.5;
+    }
+    .p7 .conclusion {
+      position: absolute; bottom: 190px; left: 80px; right: 80px;
+      background: #1a1a1a; color: #fefaf3;
+      padding: 24px 32px; border-radius: 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .p7 .conclusion .text {
+      font-size: 24px; font-weight: 900;
+    }
+    .p7 .conclusion em { color: #ff6b35; font-style: italic; font-family: "Times New Roman", serif; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Poster 4 · 数字快照(可以放小红书第 2-3 张)                -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="poster p4">
+    <div class="dots"></div>
+    <div class="kicker brand-tag">By The Numbers · 数字快照</div>
+    <h1>
+      每一天<br/>
+      我在<em class="accent">干这些</em>
+    </h1>
+
+    <div class="stats-grid">
+      <div class="stat-card coral">
+        <div class="stat-num">200<em>+</em></div>
+        <div class="stat-label">📰 条 AI 动态</div>
+        <div class="stat-sub">每天自动聚合<br/>覆盖 5 大类</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">30<em>+</em></div>
+        <div class="stat-label">🌐 公开信源</div>
+        <div class="stat-sub">HN · PH · GitHub Trending<br/>OpenAI · Anthropic 等</div>
+      </div>
+      <div class="stat-card ink">
+        <div class="stat-num">6<em>维</em></div>
+        <div class="stat-label">🔬 深度拆解</div>
+        <div class="stat-sub">每个 AI 产品<br/>投研报告级分析</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">30<em>min</em></div>
+        <div class="stat-label">⏱ 抓取间隔</div>
+        <div class="stat-sub">GitHub Actions 定时<br/>7×24 不掉线</div>
+      </div>
+    </div>
+
+    <div class="bottom-band">
+      <div>
+        <div class="label">POWERED BY</div>
+        <div class="text">全免费 AI · 智谱 GLM 主力 · 3 通道 fallback</div>
+      </div>
+      <div style="font-size: 40px;">🤖</div>
+    </div>
+
+    <div class="url-footer">
+      <div class="brand"><div class="lens-logo"></div><span>AI Lens</span></div>
+      <div class="site">ailens.cloud</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Poster 5 · 对比图                                        -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="poster p5">
+    <div class="dots"></div>
+    <div class="kicker brand-tag">The Difference · 差在哪</div>
+    <h1>
+      信息<em class="accent">瀑布</em><br/>
+      vs 信息<em class="accent">滤镜</em>
+    </h1>
+
+    <div class="vs-grid">
+      <div class="vs-col bad">
+        <span class="tag">😵 传统聚合</span>
+        <h3>信息瀑布</h3>
+        <ul>
+          <li>只做「更多」不做「更懂」</li>
+          <li>无结构 · 无分析</li>
+          <li>无观点 · 无立场</li>
+          <li>AI 生成的口水文</li>
+          <li>付费墙筛用户</li>
+          <li>广告驱动 · 越多越好</li>
+        </ul>
+      </div>
+
+      <div class="vs-divider"><span>VS</span></div>
+
+      <div class="vs-col good">
+        <span class="tag">🎯 AI Lens</span>
+        <h3>信息滤镜</h3>
+        <ul>
+          <li>主动过滤 · 精挑 200/2000</li>
+          <li>6 维结构化拆解</li>
+          <li>有署名的独立观点</li>
+          <li>PM 视角 · 一人手写</li>
+          <li>完全免费 · 无门槛</li>
+          <li>话语权驱动 · 少而准</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="url-footer">
+      <div class="brand"><div class="lens-logo"></div><span>AI Lens</span></div>
+      <div class="site">ailens.cloud</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Poster 6 · 技术栈 + 成本                                 -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="poster p6">
+    <div class="dots"></div>
+    <div class="corner"></div>
+    <div class="kicker brand-tag">Tech · Cost · 白菜价堆栈</div>
+    <h1>
+      <em>¥8</em> 一年<br/>
+      跑一个媒体
+    </h1>
+
+    <div class="price-card">
+      <div>
+        <div class="label">TOTAL COST</div>
+        <div class="price">¥<em>8</em>/<em>年</em></div>
+      </div>
+      <div class="desc">
+        域名 <em class="accent">ailens.cloud</em><br/>
+        云服务 <em class="accent">全免费</em><br/>
+        AI 通道 <em class="accent">零元跑</em>
+      </div>
+    </div>
+
+    <div class="stack-grid">
+      <div class="stack-item">
+        <div class="icon">⚛️</div>
+        <div><div class="name">Next.js 15</div><div class="desc">Vercel 免费部署</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="icon">💾</div>
+        <div><div class="name">Supabase</div><div class="desc">500 MB 免费 Postgres</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="icon">☁️</div>
+        <div><div class="name">Cloudflare</div><div class="desc">无限流量 · HK 加速</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="icon">🤖</div>
+        <div><div class="name">智谱 GLM</div><div class="desc">主力 AI · 免费无限</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="icon">🖼️</div>
+        <div><div class="name">Vercel Blob</div><div class="desc">图片存储 · 全球 CDN</div></div>
+      </div>
+      <div class="stack-item">
+        <div class="icon">⏰</div>
+        <div><div class="name">GitHub Actions</div><div class="desc">30 min 定时抓取</div></div>
+      </div>
+    </div>
+
+    <div class="url-footer">
+      <div class="brand"><div class="lens-logo"></div><span>AI Lens · 独立开发 · 2026</span></div>
+      <div class="site">ailens.cloud</div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Poster 7 · 6 维分析框架                                  -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="poster p7">
+    <div class="dots"></div>
+    <div class="kicker brand-tag">Framework · 6 维分析</div>
+    <h1>
+      不做<em class="accent">摘要</em><br/>
+      做<em class="accent">深度拆解</em>
+    </h1>
+    <div class="sub">
+      每一个 AI 产品 · 用 6 个维度拆到骨头<br/>
+      <em>投研报告级 · 独立观点 · PM 视角</em>
+    </div>
+
+    <div class="dims">
+      <div class="dim">
+        <div class="num">01</div>
+        <div class="name">🎯 定位</div>
+        <div class="desc">产品在赛道里的位置 · 抢的是谁的用户</div>
+      </div>
+      <div class="dim">
+        <div class="num">02</div>
+        <div class="name">💥 痛点</div>
+        <div class="desc">真实需求 · 用户之前怎么应付</div>
+      </div>
+      <div class="dim">
+        <div class="num">03</div>
+        <div class="name">🔧 解法</div>
+        <div class="desc">核心机制 · 为什么这样做</div>
+      </div>
+      <div class="dim">
+        <div class="num">04</div>
+        <div class="name">✨ 设计亮点</div>
+        <div class="desc">交互/UX 上别人没做到的地方</div>
+      </div>
+      <div class="dim">
+        <div class="num">05</div>
+        <div class="name">🤖 Vibe Coding</div>
+        <div class="desc">独立开发者如何 1 周复现 MVP</div>
+      </div>
+      <div class="dim">
+        <div class="num">06</div>
+        <div class="name">💰 商业价值</div>
+        <div class="desc">定价 · 目标用户 · 天花板</div>
+      </div>
+    </div>
+
+    <div class="conclusion">
+      <div class="text">
+        <em>看得多</em> · 不如 <em>看得懂</em>
+      </div>
+      <div style="font-size: 32px;">📖</div>
+    </div>
+
+    <div class="url-footer">
+      <div class="brand"><div class="lens-logo"></div><span>AI Lens</span></div>
+      <div class="site">ailens.cloud</div>
+    </div>
+  </div>
+
+</body>
+</html>

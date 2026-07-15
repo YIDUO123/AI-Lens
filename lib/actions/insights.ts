@@ -199,7 +199,7 @@ ${clean}
 请输出:
 { "polished": "润色后的文字" }`;
 
-  const raw = await generateWithAI(prompt, { temperature: 0.5, maxTokens: 3000 });
+  const raw = await generateWithAI(prompt, { temperature: 0.5, maxTokens: 3000, useCase: 'polish_insight' });
   try {
     const cleaned = raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     const parsed = JSON.parse(cleaned);
@@ -239,7 +239,7 @@ ${bodyForAI}
 3. 有钩子感 · 让读者想点开看
 4. 严格输出 JSON:{ "excerpt": "摘要文字" }`;
 
-  const raw = await generateWithAI(prompt, { temperature: 0.6, maxTokens: 500 });
+  const raw = await generateWithAI(prompt, { temperature: 0.6, maxTokens: 500, useCase: 'excerpt_generate' });
   try {
     const cleaned = raw.trim().replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     const parsed = JSON.parse(cleaned);
