@@ -98,7 +98,6 @@ export default async function AdminPage() {
             <AdminLink href="/admin/collect"   icon="🔗" label="URL 观点采集器"   badge="外部观点 + 你的评注" />
             <AdminLink href="/admin/teardowns" icon="🔬" label="产品拆解编辑器"   badge={`Markdown 双栏 · ${t.n} 篇`} coral />
             <AdminLink href="/admin/timeline"  icon="🔄" label="时间线快速添加"   badge={`一屏表单 · ${tv.n} 版本`} coral />
-            <AdminLink href="/admin/analytics" icon="📊" label="数据面板"           badge="AI · 事件 · 内容 · 一屏看" coral />
           </div>
         </section>
 
@@ -116,6 +115,17 @@ export default async function AdminPage() {
             <StatusLine label="创投精选" value="每天 8:21 抓取" ok />
             <StatusLine label="归档" value="每周一 3:07 清理旧数据" ok />
             <StatusLine label="Newsletter" value={`${nl.n} 位订阅者 · 每周日 20:00 发送`} ok />
+          </div>
+
+          {/* 数据面板入口 · 站点状态延伸 */}
+          <div className="mt-4 pt-4 border-t border-dashed border-line">
+            <AdminLink
+              href="/admin/analytics"
+              icon="📊"
+              label="打开数据面板"
+              badge="AI · 事件 · 内容 · Top · 一屏看"
+              coral
+            />
           </div>
 
           <div className="mt-4 pt-4 border-t border-dashed border-line flex gap-2 text-xs">
