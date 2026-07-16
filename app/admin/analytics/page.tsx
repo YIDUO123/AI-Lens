@@ -6,6 +6,7 @@
  */
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
+import { unstable_cache } from 'next/cache';
 import { auth } from '@/lib/auth';
 import { db, aiCallLogs, userEvents, articles, teardowns, dailyPicks, likes, saves, comments, newsletterSubscribers, user, newsItems } from '@/db';
 import { sql, desc, eq, and, gte } from 'drizzle-orm';
@@ -15,86 +16,115 @@ import { ArrowLeft, Sparkles, Activity, TrendingUp, MessageCircle, Bookmark, Hea
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// ============================================================
+// 数据获取 · 用 unstable_cache 包一层 · 60s TTL
+// 首次访问依然要跑全部 SQL(冷启动可能 5-10s)
+// 但 60s 内二次访问 · 秒返 · admin 反复看数据不再痛
+// ============================================================
+const getAnalyticsData = unstable_cache(
+  async () => {
+    const [
+      aiOverall, aiByProvider, aiByUseCase, aiRecent,
+      eventsByName, eventsRecent,
+      topArticles, topTeardowns, picksCount,
+      likesCount, savesCount, commentsCount,
+      subsData, usersCount, newsCount,
+      searchStats,
+    ] = await Promise.all([
+      // AI 汇总
+      db.execute(sql`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE success)::int AS success,
+          COUNT(*) FILTER (WHERE NOT success)::int AS fail,
+          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '1 day')::int AS today,
+          COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days')::int AS this_week,
+          PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) FILTER (WHERE success)::int AS p95_ms
+        FROM ai_call_logs
+      `),
+      db.execute(sql`
+        SELECT provider,
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE success)::int AS success,
+          ROUND(AVG(duration_ms) FILTER (WHERE success))::int AS avg_ms
+        FROM ai_call_logs GROUP BY provider ORDER BY total DESC
+      `),
+      db.execute(sql`
+        SELECT use_case, COUNT(*)::int AS total
+        FROM ai_call_logs GROUP BY use_case ORDER BY total DESC
+      `),
+      db.execute(sql`
+        SELECT use_case, provider, success, duration_ms, LEFT(COALESCE(error_code, ''), 40) AS err, created_at
+        FROM ai_call_logs ORDER BY created_at DESC LIMIT 8
+      `),
+      // 事件汇总
+      db.execute(sql`
+        SELECT event_name, COUNT(*)::int AS n, COUNT(DISTINCT session_id) FILTER (WHERE session_id IS NOT NULL)::int AS unique_sessions
+        FROM user_events GROUP BY event_name ORDER BY n DESC
+      `),
+      db.execute(sql`
+        SELECT event_name, props, path, created_at
+        FROM user_events ORDER BY created_at DESC LIMIT 10
+      `),
+      // 内容 Top
+      db.select({ id: articles.id, slug: articles.slug, title: articles.title, viewCount: articles.viewCount })
+        .from(articles).where(eq(articles.isDraft, false))
+        .orderBy(desc(articles.viewCount)).limit(5),
+      db.select({ id: teardowns.id, slug: teardowns.slug, title: teardowns.title, viewCount: teardowns.viewCount })
+        .from(teardowns).orderBy(desc(teardowns.viewCount)).limit(5),
+      db.select({ n: sql<number>`count(*)::int` }).from(dailyPicks),
+      // 互动
+      db.select({ n: sql<number>`count(*)::int` }).from(likes),
+      db.select({ n: sql<number>`count(*)::int` }).from(saves),
+      db.select({ n: sql<number>`count(*)::int` }).from(comments).where(eq(comments.isHidden, false)),
+      // 订阅 · 用户
+      db.execute(sql`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE active)::int AS active,
+          COUNT(*) FILTER (WHERE active AND created_at >= NOW() - INTERVAL '7 days')::int AS new_this_week
+        FROM newsletter_subscribers
+      `),
+      db.select({ n: sql<number>`count(*)::int` }).from(user),
+      db.select({ n: sql<number>`count(*)::int` }).from(newsItems),
+      // 搜索命中率
+      db.execute(sql`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE (props->>'is_empty')::bool = false)::int AS hit,
+          COUNT(DISTINCT props->>'query_hash')::int AS unique_queries
+        FROM user_events WHERE event_name='search_submit'
+      `),
+    ]);
+
+    return {
+      aiOverall, aiByProvider, aiByUseCase, aiRecent,
+      eventsByName, eventsRecent,
+      topArticles, topTeardowns, picksCount,
+      likesCount, savesCount, commentsCount,
+      subsData, usersCount, newsCount,
+      searchStats,
+    };
+  },
+  ['admin-analytics-data-v1'],  // cache key
+  { revalidate: 60, tags: ['analytics'] },  // 60s TTL · 或者手动 revalidateTag('analytics')
+);
+
 export default async function AnalyticsDashboard() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) redirect('/sign-in?next=/admin/analytics');
   const role = (session.user as any).role || 'reader';
   if (role !== 'admin' && role !== 'editor') redirect('/me');
 
-  // ========== 一次拿完所有数据 · 并行 ==========
-  const [
+  // ========== 一次拿完所有数据 · 走缓存 ==========
+  const {
     aiOverall, aiByProvider, aiByUseCase, aiRecent,
     eventsByName, eventsRecent,
     topArticles, topTeardowns, picksCount,
     likesCount, savesCount, commentsCount,
     subsData, usersCount, newsCount,
     searchStats,
-  ] = await Promise.all([
-    // AI 汇总
-    db.execute(sql`
-      SELECT
-        COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE success)::int AS success,
-        COUNT(*) FILTER (WHERE NOT success)::int AS fail,
-        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '1 day')::int AS today,
-        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days')::int AS this_week,
-        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) FILTER (WHERE success)::int AS p95_ms
-      FROM ai_call_logs
-    `),
-    db.execute(sql`
-      SELECT provider,
-        COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE success)::int AS success,
-        ROUND(AVG(duration_ms) FILTER (WHERE success))::int AS avg_ms
-      FROM ai_call_logs GROUP BY provider ORDER BY total DESC
-    `),
-    db.execute(sql`
-      SELECT use_case, COUNT(*)::int AS total
-      FROM ai_call_logs GROUP BY use_case ORDER BY total DESC
-    `),
-    db.execute(sql`
-      SELECT use_case, provider, success, duration_ms, LEFT(COALESCE(error_code, ''), 40) AS err, created_at
-      FROM ai_call_logs ORDER BY created_at DESC LIMIT 8
-    `),
-    // 事件汇总
-    db.execute(sql`
-      SELECT event_name, COUNT(*)::int AS n, COUNT(DISTINCT session_id) FILTER (WHERE session_id IS NOT NULL)::int AS unique_sessions
-      FROM user_events GROUP BY event_name ORDER BY n DESC
-    `),
-    db.execute(sql`
-      SELECT event_name, props, path, created_at
-      FROM user_events ORDER BY created_at DESC LIMIT 10
-    `),
-    // 内容 Top
-    db.select({ id: articles.id, slug: articles.slug, title: articles.title, viewCount: articles.viewCount })
-      .from(articles).where(eq(articles.isDraft, false))
-      .orderBy(desc(articles.viewCount)).limit(5),
-    db.select({ id: teardowns.id, slug: teardowns.slug, title: teardowns.title, viewCount: teardowns.viewCount })
-      .from(teardowns).orderBy(desc(teardowns.viewCount)).limit(5),
-    db.select({ n: sql<number>`count(*)::int` }).from(dailyPicks),
-    // 互动
-    db.select({ n: sql<number>`count(*)::int` }).from(likes),
-    db.select({ n: sql<number>`count(*)::int` }).from(saves),
-    db.select({ n: sql<number>`count(*)::int` }).from(comments).where(eq(comments.isHidden, false)),
-    // 订阅 · 用户
-    db.execute(sql`
-      SELECT
-        COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE active)::int AS active,
-        COUNT(*) FILTER (WHERE active AND created_at >= NOW() - INTERVAL '7 days')::int AS new_this_week
-      FROM newsletter_subscribers
-    `),
-    db.select({ n: sql<number>`count(*)::int` }).from(user),
-    db.select({ n: sql<number>`count(*)::int` }).from(newsItems),
-    // 搜索命中率
-    db.execute(sql`
-      SELECT
-        COUNT(*)::int AS total,
-        COUNT(*) FILTER (WHERE (props->>'is_empty')::bool = false)::int AS hit,
-        COUNT(DISTINCT props->>'query_hash')::int AS unique_queries
-      FROM user_events WHERE event_name='search_submit'
-    `),
-  ]);
+  } = await getAnalyticsData();
 
   const ai = aiOverall[0] as any;
   const subs = subsData[0] as any;
@@ -244,7 +274,7 @@ export default async function AnalyticsDashboard() {
           <div className="space-y-1 max-h-96 overflow-y-auto">
             {(eventsRecent as any[]).map((e, i) => (
               <div key={i} className="text-xs font-mono px-3 py-1.5 bg-white/60 border border-line rounded flex items-center gap-2 flex-wrap">
-                <span className="text-muted-foreground w-32 shrink-0">{new Date(e.created_at).toLocaleString('zh-CN', { hour12: false })}</span>
+                <span className="text-muted-foreground w-32 shrink-0">{new Date(e.created_at).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' })}</span>
                 <span className="font-bold text-coral">{e.event_name}</span>
                 <span className="text-muted-foreground text-[10px] truncate min-w-0 flex-1">
                   {typeof e.props === 'object' ? JSON.stringify(e.props) : ''} {e.path ? '· ' + e.path : ''}
@@ -261,7 +291,7 @@ export default async function AnalyticsDashboard() {
           <div className="space-y-1">
             {(aiRecent as any[]).map((r, i) => (
               <div key={i} className="text-xs font-mono px-3 py-1.5 bg-white/60 border border-line rounded flex items-center gap-2 flex-wrap">
-                <span className="text-muted-foreground w-32 shrink-0">{new Date(r.created_at).toLocaleString('zh-CN', { hour12: false })}</span>
+                <span className="text-muted-foreground w-32 shrink-0">{new Date(r.created_at).toLocaleString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' })}</span>
                 <span className={`font-bold w-16 shrink-0 ${r.success ? 'text-green-600' : 'text-red-500'}`}>{r.success ? '✓' : '✗'} {r.provider}</span>
                 <span className="text-ink w-32 shrink-0 truncate">{r.use_case}</span>
                 <span className="text-muted-foreground">{r.duration_ms}ms</span>
