@@ -1,7 +1,8 @@
 /**
  * 从 HackerNews API 抽取"创投产品发布" → upsert 到 daily_picks 表
- * 每天由 Vercel Cron 调用
- * 6 维分析字段留空,is_draft=true,等待你在 admin 后台补
+ * 每天由 Vercel Cron 调用 · 8:21 UTC
+ *
+ * 6 维分析字段留空 · isDraft=true(等 picks-fill-ai cron 补 AI · 补完自动发布)
  */
 import { db, dailyPicks } from '@/db';
 import { sql } from 'drizzle-orm';
@@ -71,11 +72,11 @@ export async function fetchAndStoreDailyPicks(targetCount = 10) {
         externalId,
         score: Math.min(100, it.score || 0),
         pickedAt: new Date(),
-        // 6 维留空 · 但直接发布 · admin 可随时进 /admin/picks 补/改/删
+        // 6 维留空 · draft 状态 · 等 picks-fill-ai cron 8:25 UTC 补 AI 后自动发布
         positioning: null, painPoint: null, solution: null,
         designHighlight: null, vibeCoding: null, commercial: null,
         consensus: null, criticism: null, editorTake: null,
-        isDraft: false,   // ← 抓完直接上线 · 不再堆积草稿
+        isDraft: true,
       });
     } catch (e) {
       continue;
