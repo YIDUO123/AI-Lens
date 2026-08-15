@@ -71,3 +71,21 @@
     box-shadow: 6px 6px 0 hsl(var(--ink));
   }
 }
+
+/* 页面进入过渡 · 配合 PageTransition(key=pathname)· 消除内容硬弹出 */
+@layer utilities {
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .page-enter {
+    animation: pageEnter 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* 尊重系统"减少动态效果"偏好 */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .page-enter { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}

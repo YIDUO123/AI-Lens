@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Nav } from '@/components/nav';
 import { Footer } from '@/components/footer';
+import { PageTransition } from '@/components/page-transition';
 import { DonationBubble } from '@/components/support/donation-bubble';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -117,7 +118,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen">
         <Nav />
-        <main>{children}</main>
+        <main><PageTransition>{children}</PageTransition></main>
         <Footer />
         <DonationBubble />
         <Analytics />

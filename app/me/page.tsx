@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { Bookmark, Heart, MessageCircle, Settings, ArrowRight, Sparkles, ExternalLink } from 'lucide-react';
 import { AvatarUpload } from './avatar-upload';
 import { CollapsibleGroup } from './collapsible-group';
+import { DigestPreferences } from '@/components/digest/digest-preferences';
+import { getMyDigestPreferences } from '@/lib/actions/digest';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
 
@@ -21,10 +23,11 @@ export default async function MePage() {
   const role = (user as any).role || 'reader';
   const isEditor = role === 'admin' || role === 'editor';
 
-  const [savesData, likesData, [commentsCount]] = await Promise.all([
+  const [savesData, likesData, [commentsCount], digest] = await Promise.all([
     getUserSaves(user.id),
     getUserLikes(user.id),
     db.select({ n: sql<number>`count(*)::int` }).from(comments).where(eq(comments.userId, user.id)),
+    getMyDigestPreferences(),
   ]);
 
   const joinedAt = user.createdAt ? new Date(user.createdAt as any) : new Date();
@@ -63,6 +66,16 @@ export default async function MePage() {
         <StatBox icon={<Heart className="w-4 h-4" />} num={likesData.total} label="点赞" />
         <StatBox icon={<MessageCircle className="w-4 h-4" />} num={commentsCount?.n || 0} label="评论" />
       </div>
+
+      {/* 每日精编推送 · 订阅偏好 */}
+      <section className="mb-8">
+        <DigestPreferences
+          initial={digest.prefs}
+          initialErp={digest.erp}
+          initialFeishu={digest.feishuId}
+          subscribed={digest.subscribed && digest.prefs.frequency === 'daily'}
+        />
+      </section>
 
       {/* 我的收藏 */}
       <section className="mb-8">

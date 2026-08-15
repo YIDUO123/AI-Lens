@@ -1,0 +1,21 @@
+name: Daily Digest
+
+# 每小时整点触发一次 · 服务端按用户 sendTime(北京时间)筛出该发的人
+# UTC 每小时,内部换算北京时间做匹配
+on:
+  schedule:
+    - cron: '5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit daily-digest endpoint
+        run: |
+          echo "🚀 触发每日精编推送(按小时窗口)…"
+          curl -sSf -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.PROD_URL }}/api/cron/daily-digest" | tee response.json
+          echo ""
+          echo "✅ 完成"

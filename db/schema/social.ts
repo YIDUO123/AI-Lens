@@ -5,7 +5,7 @@
  * - comments: 评论(支持树形回复)
  * - subscriptions: 订阅(未来邮件推送用)
  */
-import { pgTable, text, timestamp, index, uniqueIndex, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, index, uniqueIndex, boolean, jsonb, integer } from 'drizzle-orm/pg-core';
 import { user } from './auth';
 
 // 通用:target_type + target_id 指向 articles / teardowns / daily_picks
@@ -103,6 +103,7 @@ export type Subscription = typeof subscriptions.$inferSelect;
 
 // ============================================================
 // 邮件订阅 · 不需要注册账号 · 邮箱即可订阅 Newsletter
+// 也承载「每日资讯精编推送」的订阅偏好(P1+)
 // ============================================================
 export const newsletterSubscribers = pgTable('newsletter_subscribers', {
   id: text('id').primaryKey(),
@@ -114,9 +115,98 @@ export const newsletterSubscribers = pgTable('newsletter_subscribers', {
   // 退订就 soft-delete · 保留数据但不再发信
   active: boolean('active').notNull().default(true),
   // 来源标记(哪个页面订阅的)
-  source: text('source'), // home | insights | footer | modal
+  source: text('source'), // home | insights | footer | modal | daily
+
+  // ---- 每日精编推送 · 订阅偏好 ----
+  // 登录用户关联(邮箱订阅者为 null)· 用于 /me 管理偏好
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  // 订阅偏好 · 见 DigestPreferences 类型
+  preferences: jsonb('preferences').$type<DigestPreferences>(),
+  // 渠道身份 · 绑定后写入(JD 内部 京me/飞书 可用 ERP 反查)
+  feishuId: text('feishu_id'),
+  erp: text('erp'),
+
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  // 周报发送时间(旧字段 · 保留兼容)
   lastSentAt: timestamp('last_sent_at', { withTimezone: true }),
+  // 每日精编推送的防重发标记(和周报分开)
+  lastDailySentAt: timestamp('last_daily_sent_at', { withTimezone: true }),
 });
 
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+
+// 订阅偏好 · 存在 newsletterSubscribers.preferences
+export type DigestPreferences = {
+  // 感兴趣的模块(newsItems.category):ai-models | ai-products | industry | paper | tip
+  // 空数组 = 不限模块(默认全站)
+  modules: string[];
+  // 感兴趣的 AI 模型/家族关键词:claude | gpt | gemini | deepseek | qwen ...
+  // 空数组 = 不限
+  models: string[];
+  // 每日发送时间 · 整点/半点 · 北京时间 "09:00"
+  sendTime: string;
+  // 推送渠道 · 可多选
+  channels: Array<'email' | 'feishu' | 'jdme'>;
+  // 内容形态:brief=只发编排晨报 · cards=六维卡片 · both=晨报+点进网页看卡片
+  format: 'brief' | 'cards' | 'both';
+  // 频率(daily 为本功能核心 · weekly 走旧周报)
+  frequency: 'daily' | 'weekly';
+};
+
+// 订阅偏好的默认值 · 首次订阅时写入
+export const DEFAULT_DIGEST_PREFERENCES: DigestPreferences = {
+  modules: [],
+  models: [],
+  sendTime: '09:00',
+  channels: ['email'],
+  format: 'both',
+  frequency: 'daily',
+};
+
+// ============================================================
+// news_cards · 资讯六维拆解卡片
+// 一条资讯生成一次 · 全体用户共享(不按用户重复生成 · 省 AI 调用)
+// 六维偏「读懂一条新闻」· 和产品拆解的六维刻意区分
+// ============================================================
+export const newsCards = pgTable('news_cards', {
+  // = newsItems.id · 一对一
+  id: text('id').primaryKey(),
+  // 一句话核心(TL;DR)· 邮件/推送里就发这个
+  tldr: text('tldr').notNull(),
+  // 六维 · 网页展开时看
+  dims: jsonb('dims').notNull().$type<NewsCardDims>(),
+  // 哪个 AI 通道生成的 · 便于排查
+  genModel: text('gen_model'),
+  generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type NewsCard = typeof newsCards.$inferSelect;
+export type NewsCardDims = {
+  coreFact: string;    // 1. 核心事实 · 到底发生了什么
+  keyData: string;     // 2. 关键数据 · 数字/版本/时间点
+  whyMatters: string;  // 3. 为什么重要 · 信号与意义
+  whoAffected: string; // 4. 谁受影响 · 谁赢谁输/相关产品
+  context: string;     // 5. 背景脉络 · 前情提要
+  pmInsight: string;   // 6. PM 视角 · 行动启示
+};
+
+// ============================================================
+// news_feedback · 资讯有用/没用反馈
+// 用于「滤镜越用越准」:命中偏好但被 👎 的类别/来源后续降权
+// ============================================================
+export const newsFeedback = pgTable('news_feedback', {
+  id: text('id').primaryKey(),
+  newsId: text('news_id').notNull(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+  vote: integer('vote').notNull(), // +1 有用 / -1 没用
+  // 冗余存类别/来源 · 方便做偏好校准聚合
+  category: text('category'),
+  source: text('source'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  // 一个登录用户对一条资讯只留一票(靠 action 里 upsert 保证)
+  userNewsIdx: uniqueIndex('news_feedback_user_news_idx').on(t.userId, t.newsId),
+  newsIdx: index('news_feedback_news_idx').on(t.newsId),
+}));
+
+export type NewsFeedback = typeof newsFeedback.$inferSelect;
