@@ -37,8 +37,8 @@ export async function GET(req: Request) {
       const top = await db
         .select({ id: newsItems.id })
         .from(newsItems)
-        .orderBy(desc(newsItems.score), desc(newsItems.publishedAt))
-        .limit(8);
+        .orderBy(desc(newsItems.publishedAt), desc(newsItems.score))
+        .limit(12);
       warm = await ensureNewsCards(top.map((r) => r.id));
     } catch (e: any) {
       warm = { error: e.message };
