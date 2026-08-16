@@ -8,7 +8,7 @@ import { Coffee, X } from 'lucide-react';
 // 不显示打赏泡泡的路由
 const HIDDEN_PATHS = ['/support', '/sign-in', '/sign-up', '/admin'];
 
-export function DonationBubble() {
+export function DonationBubble({ enabled = true }: { enabled?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -37,6 +37,7 @@ export function DonationBubble() {
     return () => document.removeEventListener('click', handler);
   }, [open]);
 
+  if (!enabled) return null;
   if (!mounted) return null;
   if (dismissed) return null;
   if (HIDDEN_PATHS.some((p) => pathname.startsWith(p))) return null;

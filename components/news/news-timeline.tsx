@@ -125,7 +125,7 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
 
                     <div className="min-w-0">
                       <h3 className="text-base font-bold leading-snug mb-1.5">
-                        <a href={it.url || '#'} target="_blank" rel="noopener noreferrer" className="hover:text-coral">{it.title}</a>
+                        <a href={`/news/card/${it.id}`} className="hover:text-coral">{it.title}</a>
                       </h3>
                       {it.summary && (
                         <p className="text-sm text-ink-soft leading-relaxed mb-2 line-clamp-2">{it.summary}</p>
@@ -133,6 +133,8 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                       <div className="flex items-center gap-2.5 flex-wrap text-xs text-muted-foreground">
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cat.bg}`}>{cat.label}</span>
                         <span className="font-semibold">· {cleanSource(it.source)}</span>
+                        <a href={`/news/card/${it.id}`} className="text-coral font-bold hover:underline">六维拆解 →</a>
+                        {it.url && <a href={it.url} target="_blank" rel="noopener noreferrer" className="hover:text-coral">原文 ↗</a>}
                       </div>
                       {insight && (
                         <div className="mt-3 px-3.5 py-2.5 bg-orange-50 border-l-[3px] border-coral rounded-r-md text-[12.5px] leading-relaxed text-ink-soft">

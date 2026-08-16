@@ -81,12 +81,12 @@ async function ReleasesReport({ activeFam }: { activeFam: string }) {
                 {m.icon} {m.name}
               </span>
               <h4 className="text-sm font-bold leading-snug tracking-tight">
-                <a href={r.url || '#'} target="_blank" rel="noopener noreferrer" className="hover:text-coral">{r.title}</a>
+                <a href={`/news/card/${r.id}`} className="hover:text-coral">{r.title}</a>
               </h4>
               {r.summary && <p className="text-xs text-ink-soft leading-relaxed line-clamp-2">{r.summary}</p>}
               <div className="mt-auto pt-2 border-t border-dashed border-ink/12 flex items-center justify-between text-[11px] text-muted-foreground">
                 <span className="font-mono text-coral font-bold">{fmtRelTime(r.publishedAt)}</span>
-                <span className="truncate max-w-[60%]">{cleanSource(r.source)}</span>
+                <a href={`/news/card/${r.id}`} className="text-coral font-bold hover:underline">六维 →</a>
               </div>
             </article>
           );
@@ -159,7 +159,7 @@ async function WindowReport({ days, label, title, isDaily, variant }: { days: nu
                 {secItems.map((it) => (
                   <li key={it.id} className="text-xs leading-relaxed pl-3.5 relative">
                     <span className="absolute left-0 top-2 w-1 h-1 rounded-full bg-coral" />
-                    <a href={it.url || '#'} target="_blank" rel="noopener noreferrer" className="text-ink hover:text-coral hover:underline">
+                    <a href={`/news/card/${it.id}`} className="text-ink hover:text-coral hover:underline">
                       {it.title}
                     </a>
                     {it.source && <span className="block text-[10px] text-muted-foreground mt-0.5">— {cleanSource(it.source)}</span>}

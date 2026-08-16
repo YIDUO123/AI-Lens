@@ -12,14 +12,33 @@
 
 const OPEN_BASE = process.env.FEISHU_API_BASE || 'https://open.feishu.cn/open-apis';
 
-/** 模式 1:群机器人 webhook 发文本 */
+/** 飞书自定义机器人「加签」· secret 存在时才算签名 */
+async function feishuSign(secret: string, timestamp: number): Promise<string> {
+  const { createHmac } = await import('crypto');
+  // 飞书算法:key = `${timestamp}\n${secret}`,内容为空,HMAC-SHA256 后 base64
+  const stringToSign = `${timestamp}\n${secret}`;
+  return createHmac('sha256', stringToSign).update('').digest('base64');
+}
+
+/** 模式 1:群机器人 webhook 发文本(支持加签) */
 export async function sendFeishuWebhook(text: string, webhookUrl?: string): Promise<void> {
   const url = webhookUrl || process.env.FEISHU_WEBHOOK_URL;
   if (!url) throw new Error('飞书 webhook 未配置(FEISHU_WEBHOOK_URL)');
+
+  const payload: any = { msg_type: 'text', content: { text } };
+
+  // 若配了加签 secret,带上 timestamp + sign(机器人开了签名校验时必需)
+  const secret = process.env.FEISHU_WEBHOOK_SECRET;
+  if (secret) {
+    const timestamp = Math.floor(Date.now() / 1000);
+    payload.timestamp = String(timestamp);
+    payload.sign = await feishuSign(secret, timestamp);
+  }
+
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ msg_type: 'text', content: { text } }),
+    body: JSON.stringify(payload),
   });
   const json = await res.json().catch(() => ({}));
   if (json?.code !== 0 && json?.StatusCode !== 0) {

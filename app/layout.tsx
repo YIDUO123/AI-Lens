@@ -3,6 +3,7 @@ import { Nav } from '@/components/nav';
 import { Footer } from '@/components/footer';
 import { PageTransition } from '@/components/page-transition';
 import { DonationBubble } from '@/components/support/donation-bubble';
+import { isDonationEnabled } from '@/lib/settings-read';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
@@ -82,11 +83,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const donationOn = await isDonationEnabled();
   return (
     <html lang="zh-CN">
       <head>
@@ -120,7 +122,7 @@ export default function RootLayout({
         <Nav />
         <main><PageTransition>{children}</PageTransition></main>
         <Footer />
-        <DonationBubble />
+        <DonationBubble enabled={donationOn} />
         <Analytics />
         <SpeedInsights />
       </body>

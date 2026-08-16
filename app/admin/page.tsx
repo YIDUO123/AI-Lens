@@ -9,6 +9,8 @@ import { db, articles, teardowns, timelineVersions, dailyPicks, newsItems, newsl
 import { sql, eq } from 'drizzle-orm';
 import Link from 'next/link';
 import { FileText, BookOpen, Rocket, Star, Newspaper, ArrowRight, Database, ExternalLink, User as UserIcon, Coffee } from 'lucide-react';
+import { DonationToggle } from './donation-toggle';
+import { isDonationEnabled } from '@/lib/settings-read';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
 
@@ -35,6 +37,8 @@ export default async function AdminPage() {
     db.select({ n: sql<number>`count(*)::int` }).from(newsItems),
     db.select({ n: sql<number>`count(*)::int` }).from(newsletterSubscribers).where(eq(newsletterSubscribers.active, true)),
   ]);
+
+  const donationOn = await isDonationEnabled();
 
   return (
     <div className="container max-w-5xl py-12 pb-24">
@@ -126,6 +130,12 @@ export default async function AdminPage() {
               badge="AI · 事件 · 内容 · Top · 一屏看"
               coral
             />
+          </div>
+
+          {/* 站点开关 */}
+          <div className="mt-4 pt-4 border-t border-dashed border-line">
+            <div className="text-[10px] font-black tracking-widest uppercase text-ink-soft mb-2">Switches · 站点开关</div>
+            <DonationToggle initialEnabled={donationOn} />
           </div>
 
           <div className="mt-4 pt-4 border-t border-dashed border-line flex gap-2 text-xs">

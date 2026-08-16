@@ -54,7 +54,16 @@ async function main() {
   await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS news_feedback_user_news_idx ON news_feedback (user_id, news_id);`);
   await db.execute(sql`CREATE INDEX IF NOT EXISTS news_feedback_news_idx ON news_feedback (news_id);`);
 
-  console.log('✅ 完成 · newsletter_subscribers 已扩展 · news_cards / news_feedback 已建');
+  console.log('🚀 建 site_settings 表 …');
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key        TEXT PRIMARY KEY,
+      value      TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  console.log('✅ 完成 · newsletter_subscribers 已扩展 · news_cards / news_feedback / site_settings 已建');
   await client.end();
 }
 

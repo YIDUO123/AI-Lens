@@ -210,3 +210,15 @@ export const newsFeedback = pgTable('news_feedback', {
 }));
 
 export type NewsFeedback = typeof newsFeedback.$inferSelect;
+
+// ============================================================
+// site_settings · 站点级开关/配置(键值)
+// 例:donation_enabled=true/false 控制打赏泡泡展示
+// ============================================================
+export const siteSettings = pgTable('site_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type SiteSetting = typeof siteSettings.$inferSelect;
