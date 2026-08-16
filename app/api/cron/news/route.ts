@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { fetchAndStoreNews } from '@/lib/fetchers/news';
 import { extractAndStoreReleases } from '@/lib/fetchers/releases';
+import { db, newsItems } from '@/db';
+import { desc } from 'drizzle-orm';
+import { ensureNewsCards } from '@/lib/ai/news-card';
 
 /**
  * GET /api/cron/news
@@ -26,7 +29,22 @@ export async function GET(req: Request) {
   try {
     const news = await fetchAndStoreNews(200);
     const rel = await extractAndStoreReleases(30);
-    return NextResponse.json({ ok: true, news, releases: rel, at: new Date().toISOString() });
+
+    // 预热六维卡片:给最新的高分资讯先生成好,用户点进卡片页即时可看(不用等 17s AI)
+    // ensureNewsCards 已有的跳过,只生成新的;失败不影响 cron。
+    let warm: any = null;
+    try {
+      const top = await db
+        .select({ id: newsItems.id })
+        .from(newsItems)
+        .orderBy(desc(newsItems.score), desc(newsItems.publishedAt))
+        .limit(8);
+      warm = await ensureNewsCards(top.map((r) => r.id));
+    } catch (e: any) {
+      warm = { error: e.message };
+    }
+
+    return NextResponse.json({ ok: true, news, releases: rel, warmCards: warm, at: new Date().toISOString() });
   } catch (e: any) {
     console.error('[cron/news]', e);
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
