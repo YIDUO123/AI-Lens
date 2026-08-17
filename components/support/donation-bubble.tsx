@@ -13,6 +13,8 @@ export function DonationBubble({ enabled = true }: { enabled?: boolean }) {
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // 客户端实时拉开关 · 绕开 HTML/CDN 缓存,后台一改立即生效
+  const [live, setLive] = useState<boolean | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -24,7 +26,12 @@ export function DonationBubble({ enabled = true }: { enabled?: boolean }) {
         if (ago < 24 * 60 * 60 * 1000) setDismissed(true);
       }
     } catch {}
-  }, []);
+    // 实时开关
+    fetch('/api/settings/donation', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => setLive(!!d.enabled))
+      .catch(() => setLive(enabled)); // 拉失败回退到 SSR 值
+  }, [enabled]);
 
   // 关闭 popup 时点击外部
   useEffect(() => {
@@ -37,7 +44,7 @@ export function DonationBubble({ enabled = true }: { enabled?: boolean }) {
     return () => document.removeEventListener('click', handler);
   }, [open]);
 
-  if (!enabled) return null;
+  if (live !== true) return null;
   if (!mounted) return null;
   if (dismissed) return null;
   if (HIDDEN_PATHS.some((p) => pathname.startsWith(p))) return null;
