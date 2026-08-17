@@ -74,13 +74,16 @@ export async function GET(req: NextRequest) {
   const lines: string[] = [];
   lines.push(`# AI Lens 知识库 · ${dateStr}`);
   lines.push(`> 由 AI Lens(ailens.cloud)自动导出 · 覆盖最近 ${days} 天资讯 + 产品拆解 + 创投精选。`);
-  lines.push(`> 用途:作为"AI Lens 情报官"智能体的知识来源。回答 AI 行业动向、产品对比、趋势判断时以此为准。\n`);
+  lines.push(`> 用途:作为"AI Lens 情报官"智能体的知识来源。回答 AI 行业动向、产品对比、趋势判断时以此为准。`);
+  lines.push(`> 回答规则:引用任何一条资讯时,必须在该条后面附上它的「原文链接」或「AI Lens 六维卡片」链接(见每条下方),方便读者点击查证。\n`);
 
   lines.push(`\n## 一、近期 AI 资讯(含六维拆解)\n`);
   for (const n of news) {
     const c = cardMap.get(n.id);
     lines.push(`### ${n.title}`);
-    lines.push(`- 来源:${n.source || '未知'} · 分类:${n.category || '-'} · 链接:${n.url || '-'}`);
+    lines.push(`- 来源:${n.source || '未知'} · 分类:${n.category || '-'}`);
+    lines.push(`- 原文链接:${n.url || '-'}`);
+    lines.push(`- AI Lens 六维卡片:https://ailens.cloud/news/card/${n.id}`);
     if (c) {
       const d = c.dims as any;
       lines.push(`- 一句话:${c.tldr}`);
