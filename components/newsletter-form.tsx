@@ -65,12 +65,13 @@ export function NewsletterForm({ source = 'unknown', compact = false }: { source
 
   return (
     <div className="bg-gradient-to-br from-orange-50 to-amber-100 border-2 border-ink rounded-2xl p-6 md:p-8 shadow-brutal-sm">
-      <div className="text-[10px] font-black tracking-[2px] uppercase text-coral mb-2">Weekly Newsletter</div>
+      <div className="text-[10px] font-black tracking-[2px] uppercase text-coral mb-2">Daily Digest</div>
       <h3 className="text-2xl md:text-3xl font-black tracking-tight mb-2">
-        每周日晚 · <em className="accent">AI Lens 周报</em>
+        每天早 9 点 · <em className="accent">AI Lens 精编</em>
       </h3>
       <p className="text-sm text-ink-soft mb-5 leading-relaxed">
-        每周日 8 点(北京时间)· 一封信 · 给你本周最值得看的 AI 洞察 · 产品拆解 · 精选工具 · 不打广告 · 一键退订。
+        每天早 9 点(北京时间)· 10 条精选资讯 · 六维拆解 · 5 分钟读懂今天的 AI · 不打广告 · 一键退订。
+        <br />想按模块/模型定制、或改推送时间和渠道?<a href="/me" className="text-coral font-bold hover:underline">登录后到个人中心设置</a>。
       </p>
 
       <form onSubmit={submit} className="flex flex-col sm:flex-row gap-2">
@@ -90,7 +91,7 @@ export function NewsletterForm({ source = 'unknown', compact = false }: { source
           {status === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> :
            status === 'ok' ? <Check className="w-4 h-4" /> :
            <Mail className="w-4 h-4" />}
-          {status === 'ok' ? '已订阅' : '订阅周报'}
+          {status === 'ok' ? '已订阅' : '订阅每日精编'}
         </button>
       </form>
 

@@ -122,7 +122,7 @@ export default async function MePage() {
             <ExploreLink href="/news" label="AI 资讯" desc="今日精选" />
             <ExploreLink href="/teardowns#picks" label="每日创投" desc="6 维分析" />
             <ExploreLink href="/insights" label="洞察长文" desc="PM 视角" />
-            <ExploreLink href="/timeline" label="迭代追踪" desc="AI 家族演化" />
+            <ExploreLink href="/timeline" label="模型追踪" desc="AI 家族演化" />
           </div>
         </div>
       </section>

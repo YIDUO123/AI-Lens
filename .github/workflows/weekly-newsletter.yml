@@ -1,10 +1,8 @@
-name: Weekly Newsletter
+name: Weekly Newsletter (retired)
 
-# 每周日 12:00 UTC = 周日 20:00 北京时间
-# 顺便加个手动触发按钮方便你测试
+# 已下线:每周周报被「每日精编推送」(daily-digest.yml)取代。
+# 保留手动触发以备不时之需,但取消定时,不再自动发送。
 on:
-  schedule:
-    - cron: '0 12 * * 0'
   workflow_dispatch:
 
 jobs:

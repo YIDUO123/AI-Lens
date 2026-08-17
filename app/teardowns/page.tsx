@@ -2,9 +2,8 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import { getAllDailyPicks, getAllModels, getPublishedTeardowns, getInteractionCountsBatch, getUserInteractions } from '@/lib/db/queries';
+import { getAllDailyPicks, getPublishedTeardowns, getInteractionCountsBatch, getUserInteractions } from '@/lib/db/queries';
 import { DailyPicksSection } from '@/components/teardowns/daily-picks-section';
-import { ModelComparison } from '@/components/teardowns/model-comparison';
 import { CollapsibleSection } from '@/components/teardowns/collapsible-section';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
@@ -27,9 +26,8 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
   const picksCat = sp.picks || 'all';
   const libCat = sp.lib || 'all';
 
-  const [picks, models, teardowns, session] = await Promise.all([
+  const [picks, teardowns, session] = await Promise.all([
     getAllDailyPicks(12),
-    getAllModels(),
     getPublishedTeardowns(30),
     auth.api.getSession({ headers: await headers() }),
   ]);
@@ -53,11 +51,12 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
             Deep teardown · 每日刷新
           </span>
           <h1 className="text-5xl md:text-6xl font-black tracking-[-0.03em] leading-[1.05] mb-4">
-            产品 <em className="accent">拆解与对比</em>
+            产品 <em className="accent">拆解</em>
           </h1>
           <p className="max-w-3xl text-ink-soft leading-relaxed">
-            像投研报告一样看 AI 产品:实时对比主流模型的能力与价格,追踪最新发布,附 PM 视角的深度判断。
+            像投研报告一样看 AI 产品:每日创投精选自动追踪最新发布,深度拆解库附 PM 视角的六维判断。
             客观数据自动更新,主观解读由人工编辑 —— 谁写的、什么时候写的,都标得清清楚楚。
+            想看模型能力对比,去 <Link href="/timeline#cmp" className="text-coral font-bold hover:underline">模型追踪</Link>。
           </p>
         </div>
       </section>
@@ -72,14 +71,12 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
             </div>
             <ul className="space-y-1 mb-8">
               <NavItem href="#picks" icon="🌟" label="每日精选" count={picks.length} />
-              <NavItem href="#cmp"   icon="📊" label="模型 · 对比" count={models.length} />
               <NavItem href="#library" icon="📚" label="深度拆解库" count={teardowns.length} />
             </ul>
 
             <div className="bg-bg-alt rounded-xl p-4 text-xs leading-relaxed text-ink-soft">
               <b className="text-ink block mb-1.5">💡 关于本页数据</b>
               每日精选从 HackerNews / Product Hunt 自动抓取,补充 6 维分析在 admin 后台。<br />
-              模型参数来自 OpenRouter,每 6 小时刷新。<br />
               能力评级、"编辑观点"由 AI Lens 编辑撰写。
             </div>
           </aside>
@@ -110,42 +107,7 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
               </Suspense>
             </CollapsibleSection>
 
-            {/* ============ Section 2 · 模型对比 ============ */}
-            <CollapsibleSection
-              id="cmp"
-              storageKey="cmp"
-              head={
-                <SectionHead
-                  kicker="Live comparison · 实时对比"
-                  title={<>AI 模型 <em className="accent">能力对比</em></>}
-                  right={<><LiveTag /> 价格 / 上下文长度实时更新<br /><span className="text-muted-foreground text-xs">数据更新于 {formatRelative(models[0]?.fetchedAt)}</span></>}
-                />
-              }
-            >
-              <Suspense fallback={<CmpSkeleton />}>
-                <ModelComparison models={models} />
-              </Suspense>
-
-              {/* PM 结论 */}
-              <div className="mt-2 bg-ink text-background rounded-2xl p-6 md:p-8 relative overflow-hidden">
-                <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.2),transparent_70%)] pointer-events-none" />
-                <h4 className="text-xs font-black tracking-[2px] text-coral mb-2.5">🎯 PM 结论</h4>
-                <p className="text-sm leading-relaxed text-white/80 relative">
-                  <strong className="text-white">2026 上半年的头部模型格局:三分天下但阵型不同。</strong>
-                  OpenAI 用"分层价格"覆盖开发者市场;Anthropic 用"更长上下文 + 更细粒度控制"打专业场景;
-                  Google 用"极低边际成本"抢新兴市场用户。<br /><br />
-                  <strong className="text-white">选型三条经验法则:</strong>
-                  (1) 需要 200 页以上文档理解 → Claude 4.5+ 或 Gemini 2.5 Pro;
-                  (2) 追求极致性价比 → Gemini 2.5 Flash Lite;
-                  (3) 复杂推理 + 工具调用 → GPT-5 Pro 或 Claude Opus 4.8。
-                </p>
-                <div className="mt-3 pt-3 border-t border-dashed border-white/20 text-[11px] italic font-serif text-white/40">
-                  — AI Lens 编辑部 · 2026.07 更新
-                </div>
-              </div>
-            </CollapsibleSection>
-
-            {/* ============ Section 3 · 深度拆解库 ============ */}
+            {/* ============ Section 2 · 深度拆解库 ============ */}
             <CollapsibleSection
               id="library"
               storageKey="library"
@@ -313,25 +275,7 @@ function PicksSkeleton() {
   );
 }
 
-function CmpSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="h-16 rounded-2xl bg-cream border-2 border-ink/10 animate-pulse" />
-      <div className="h-96 rounded-2xl bg-cream border-2 border-ink/10 animate-pulse" />
-    </div>
-  );
-}
-
 function formatDate(date: Date | string): string {
   const d = new Date(date);
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function formatRelative(date: Date | string | null | undefined): string {
-  if (!date) return '—';
-  const d = new Date(date);
-  const diffMin = Math.round((Date.now() - d.getTime()) / 60000);
-  if (diffMin < 1) return '刚刚';
-  if (diffMin < 60) return `${diffMin} 分钟前`;
-  return `${Math.round(diffMin / 60)} 小时前`;
 }

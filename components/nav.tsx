@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { href: '/', label: '首页' },
   { href: '/news', label: 'AI 资讯' },
   { href: '/teardowns', label: '产品拆解' },
-  { href: '/timeline', label: '迭代追踪' },
+  { href: '/timeline', label: '模型追踪' },
   { href: '/insights', label: '洞察专栏' },
   { href: '/about', label: '关于' },
 ];

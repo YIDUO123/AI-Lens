@@ -115,10 +115,10 @@ export default async function AdminPage() {
 
           <div className="space-y-2">
             <StatusLine label="资讯" value="每天自动抓取 200 条" ok />
-            <StatusLine label="模型对比" value="每天自动刷新" ok />
+            <StatusLine label="模型对比" value="每天自动刷新 · 在模型追踪页" ok />
             <StatusLine label="创投精选" value="每天 8:21 抓取" ok />
             <StatusLine label="归档" value="每周一 3:07 清理旧数据" ok />
-            <StatusLine label="Newsletter" value={`${nl.n} 位订阅者 · 每周日 20:00 发送`} ok />
+            <StatusLine label="每日精编" value={`${nl.n} 位订阅者 · 每天 9:00 推送(可自选)`} ok />
           </div>
 
           {/* 数据面板入口 · 站点状态延伸 */}
@@ -162,7 +162,7 @@ export default async function AdminPage() {
             <QuickLink href="/" label="首页" />
             <QuickLink href="/news" label="AI 资讯" />
             <QuickLink href="/teardowns" label="产品拆解" />
-            <QuickLink href="/timeline" label="迭代追踪" />
+            <QuickLink href="/timeline" label="模型追踪" />
             <QuickLink href="/insights" label="洞察专栏" />
             <QuickLink href="/about" label="关于" />
           </div>
