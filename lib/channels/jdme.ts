@@ -97,6 +97,48 @@ export async function sendJdmeToGroup(groupId: string, text: string): Promise<{ 
   return { packetId: json?.data?.packetId };
 }
 
+// ============================================================
+// 互动卡片(sendJUEMsg)· 富文本/图片,比纯文本好看
+// 前置:在京ME卡片平台(me.jd.com/openplatform)可视化搭一张模板,拿到 templateId,
+//       模板变量名对应 cardData 的 key。未配 JDME_CARD_TEMPLATE_ID 时走文本兜底。
+// ============================================================
+export async function sendJdmeCard(
+  target: { erp?: string; groupId?: string },
+  opts: { templateId: string; cardData: Record<string, any>; summary?: string; widthMode?: 'compact' | 'standard' | 'wide' },
+): Promise<{ cardMsgId?: string }> {
+  const { appKey, robotId } = creds();
+  const teamToken = await getTeamToken();
+  const base: any = {
+    appId: appKey,
+    requestId: crypto.randomUUID(),
+    dateTime: Date.now(),
+    tenantId: TENANT,
+    ...(target.groupId ? { groupId: target.groupId } : { erp: target.erp }),
+  };
+  const body = {
+    ...base,
+    params: {
+      robotId,
+      data: {
+        templateId: opts.templateId,
+        templateType: 1,
+        width_mode: opts.widthMode || 'wide',
+        reload: false,
+        summary: opts.summary || '',
+        cardData: opts.cardData,
+        forward: { reload: false, cardData: opts.cardData },
+      },
+    },
+  };
+  const json = await apiPost('/suite/v1/timline/sendJUEMsg', body, teamToken);
+  return { cardMsgId: json?.data?.cardMsgId };
+}
+
 export function jdmeConfigured(): boolean {
   return !!(process.env.JDME_APP_KEY && process.env.JDME_APP_SECRET && process.env.JDME_OPEN_TEAM_ID && process.env.JDME_ROBOT_ID);
+}
+
+/** 是否已配置卡片模板(配了才发卡片,否则发文本) */
+export function jdmeCardTemplateId(): string | null {
+  return process.env.JDME_CARD_TEMPLATE_ID || null;
 }

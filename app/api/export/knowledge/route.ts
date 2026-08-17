@@ -15,10 +15,15 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 function authOK(req: NextRequest): boolean {
+  const u = new URL(req.url);
+  const qToken = u.searchParams.get('token');
+  // 干净的知识库专用 token(无特殊字符)· 供 JoyAgent URL 同步用
+  const kbToken = process.env.KB_TOKEN;
+  if (kbToken && qToken === kbToken) return true;
+  // 兼容 CRON_SECRET(header 或 query)
   const secret = process.env.CRON_SECRET;
   if (!secret) return true;
-  const u = new URL(req.url);
-  if (u.searchParams.get('token') === secret) return true;
+  if (qToken === secret) return true;
   if ((req.headers.get('authorization') || '') === `Bearer ${secret}`) return true;
   return false;
 }

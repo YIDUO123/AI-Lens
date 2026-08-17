@@ -99,6 +99,18 @@ export async function GET(req: NextRequest) {
       subject: `AI Lens 每日精编 · ${label}`,
       html: renderDigestEmail(enriched, { matched: digest.matched, date: label, unsubscribeUrl }),
       text: renderDigestText(enriched, { matched: digest.matched, date: label }),
+      // 京ME 卡片模板变量(配了 JDME_CARD_TEMPLATE_ID 才用)· 模板用这些变量名
+      cardData: {
+        title: `AI Lens 每日精编 · ${label}`,
+        date: label,
+        count: String(enriched.length),
+        matched: String(digest.matched),
+        body: renderDigestText(enriched, { matched: digest.matched, date: label }),
+        top1: enriched[0]?.tldr || enriched[0]?.title || '',
+        top2: enriched[1]?.tldr || enriched[1]?.title || '',
+        top3: enriched[2]?.tldr || enriched[2]?.title || '',
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.BETTER_AUTH_URL || 'https://ailens.cloud'}/news`,
+      },
     };
 
     const r = await sendToSubscriber(sub, payload);

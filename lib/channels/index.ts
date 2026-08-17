@@ -7,7 +7,7 @@
  * - feishu: webhook / 应用 1:1 · 纯文本(需 openid 或群 webhook)
  */
 import { Resend } from 'resend';
-import { sendJdmeToErp, jdmeConfigured } from './jdme';
+import { sendJdmeToErp, sendJdmeToGroup, sendJdmeCard, jdmeConfigured, jdmeCardTemplateId } from './jdme';
 import { sendFeishuToUser, sendFeishuWebhook, feishuConfigured } from './feishu';
 import type { NewsletterSubscriber } from '@/db';
 
@@ -15,6 +15,7 @@ export type ChannelPayload = {
   subject: string;   // 邮件标题
   html: string;      // 邮件正文(email 用)
   text: string;      // 纯文本正文(jdme/feishu 用)
+  cardData?: Record<string, any>; // 京ME 卡片模板变量(配了模板才用)
 };
 
 export type SendResult = { channel: string; ok: boolean; error?: string; id?: string };
@@ -36,6 +37,12 @@ async function sendJdme(sub: NewsletterSubscriber, p: ChannelPayload): Promise<S
   if (!jdmeConfigured()) return { channel: 'jdme', ok: false, error: '京me 凭证未配置' };
   if (!sub.erp) return { channel: 'jdme', ok: false, error: '该用户未绑定 ERP' };
   try {
+    const templateId = jdmeCardTemplateId();
+    // 配了卡片模板 + 有卡片数据 → 发卡片(好看);否则发文本兜底
+    if (templateId && p.cardData) {
+      const { cardMsgId } = await sendJdmeCard({ erp: sub.erp }, { templateId, cardData: p.cardData, summary: p.subject });
+      return { channel: 'jdme', ok: true, id: cardMsgId };
+    }
     const { packetId } = await sendJdmeToErp(sub.erp, p.text);
     return { channel: 'jdme', ok: true, id: packetId };
   } catch (e: any) {
