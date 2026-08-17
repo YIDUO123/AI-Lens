@@ -14,35 +14,37 @@ import type { NewsCardDims, NewsItem } from '@/db';
 
 function buildPrompt(item: Pick<NewsItem, 'title' | 'summary' | 'source' | 'category'>): string {
   return `你是资深 AI 行业分析师,擅长把一条 AI 资讯拆成"5 分钟读懂"的结构化卡片。
-请对下面这条资讯做六维拆解,让读者花 30 秒看 TL;DR、花 2 分钟看六维就能真正读懂。
+请用「文章概览 + STAR + 行动启示」六个维度拆解,让读者花 30 秒看概览、花 2 分钟看 STAR 就真正读懂。
 
 资讯标题:${item.title}
 资讯摘要:${item.summary || '(无摘要,请基于标题合理推断,但不要编造具体数字)'}
 来源:${item.source || '未知'}
 
 要求:
-1. 中文输出 · 每个维度 1-2 句 · 具体、有信息量、不说废话
-2. 不确定的数字不要编 · 没有就写"暂无公开数据"
-3. pmInsight 要给"所以我该关注/做什么"的行动启示,是这张卡片最有价值的部分
-4. tldr 是一句话核心(30 字内)
-5. 严格输出 JSON · 不要 markdown 代码块包裹
+1. 中文输出 · 具体、有信息量、不说废话
+2. overview(文章概览)是"一段话"(2-4 句),把这条资讯讲清楚,不是一句话标题
+3. STAR 四项各 1-2 句:situation 情境背景、task 焦点/要解决什么、action 关键做法/宣布了什么、result 结果与影响
+4. takeaway(行动启示)给"所以我该关注/做什么",是最有价值的部分
+5. 不确定的数字不要编 · 没有就写"暂无公开数据"
+6. tldr 是一句话核心(30 字内,用于列表/推送预览)
+7. 严格输出 JSON · 不要 markdown 代码块包裹
 
 输出格式:
 {
   "tldr": "一句话核心",
   "dims": {
-    "coreFact": "核心事实 · 到底发生了什么",
-    "keyData": "关键数据 · 数字/版本/时间点",
-    "whyMatters": "为什么重要 · 信号与意义",
-    "whoAffected": "谁受影响 · 谁赢谁输/相关产品",
-    "context": "背景脉络 · 前情提要",
-    "pmInsight": "PM 视角 · 行动启示"
+    "overview": "文章概览 · 一段话(2-4 句)讲清楚这条资讯",
+    "situation": "S 情境 · 背景/发生了什么",
+    "task": "T 焦点 · 要解决的问题/看点",
+    "action": "A 行动 · 关键做法/宣布了什么",
+    "result": "R 结果 · 带来的影响/数据/结论",
+    "takeaway": "行动启示 · 所以我该关注/做什么"
   }
 }`;
 }
 
 const EMPTY_DIMS: NewsCardDims = {
-  coreFact: '', keyData: '', whyMatters: '', whoAffected: '', context: '', pmInsight: '',
+  overview: '', situation: '', task: '', action: '', result: '', takeaway: '',
 };
 
 /** 生成单条资讯的六维卡片(不落库,纯计算) */
@@ -64,7 +66,7 @@ export async function generateNewsCard(
     // AI 不听话时兜底:TL;DR 用标题,核心事实用摘要
     return {
       tldr: item.title.slice(0, 30),
-      dims: { ...EMPTY_DIMS, coreFact: item.summary || item.title },
+      dims: { ...EMPTY_DIMS, overview: item.summary || item.title },
     };
   }
 }

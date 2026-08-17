@@ -181,13 +181,14 @@ export const newsCards = pgTable('news_cards', {
 });
 
 export type NewsCard = typeof newsCards.$inferSelect;
+// 资讯六维 · 文章概览 + STAR + 行动启示
 export type NewsCardDims = {
-  coreFact: string;    // 1. 核心事实 · 到底发生了什么
-  keyData: string;     // 2. 关键数据 · 数字/版本/时间点
-  whyMatters: string;  // 3. 为什么重要 · 信号与意义
-  whoAffected: string; // 4. 谁受影响 · 谁赢谁输/相关产品
-  context: string;     // 5. 背景脉络 · 前情提要
-  pmInsight: string;   // 6. PM 视角 · 行动启示
+  overview: string;   // 文章概览 · 一段话讲清楚
+  situation: string;  // S · 情境 · 背景/发生了什么
+  task: string;       // T · 焦点 · 要解决的问题/看点
+  action: string;     // A · 行动 · 关键做法/宣布了什么
+  result: string;     // R · 结果 · 带来的影响/数据/结论
+  takeaway: string;   // 行动启示 · 所以我该关注/做什么
 };
 
 // ============================================================
