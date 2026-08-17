@@ -187,13 +187,13 @@ function ReportHero({ label, title, dateLine, children, variant = 'daily' }: { l
   const variantBg: Record<string, string> = {
     daily:    'bg-gradient-to-br from-orange-50 via-orange-100/40 to-amber-100/70',
     weekly:   'bg-gradient-to-br from-blue-50 via-cyan-100/40 to-teal-100/60',
-    monthly:  'bg-gradient-to-br from-purple-50 via-violet-100/40 to-indigo-100/50',
+    monthly:  'bg-gradient-to-br from-rose-50 via-rose-100/40 to-orange-100/50',
     releases: 'bg-gradient-to-br from-orange-100 via-amber-100/60 to-yellow-100/50',
   };
   const variantAccent: Record<string, string> = {
     daily:    'rgba(255,107,53,0.12)',
     weekly:   'rgba(14,92,90,0.14)',
-    monthly:  'rgba(124,58,237,0.14)',
+    monthly:  'rgba(194,95,60,0.14)',
     releases: 'rgba(255,107,53,0.18)',
   };
 
