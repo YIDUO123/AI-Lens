@@ -6,8 +6,8 @@
  * 用在 /me · 登录用户管理自己的每日推送
  */
 import { useState, useTransition } from 'react';
-import { Loader2, Check, Bell } from 'lucide-react';
-import { saveDigestPreferences } from '@/lib/actions/digest';
+import { Loader2, Check, Bell, Send } from 'lucide-react';
+import { saveDigestPreferences, testFeishuWebhook } from '@/lib/actions/digest';
 import type { DigestPreferences } from '@/db';
 
 const MODULES = [
@@ -26,11 +26,12 @@ const CHANNELS = [
 ];
 
 export function DigestPreferences({
-  initial, initialErp, initialFeishu, subscribed,
+  initial, initialErp, initialFeishu, initialFeishuWebhook, subscribed,
 }: {
   initial: DigestPreferences;
   initialErp: string | null;
   initialFeishu: string | null;
+  initialFeishuWebhook: string | null;
   subscribed: boolean;
 }) {
   const [modules, setModules] = useState<string[]>(initial.modules || []);
@@ -40,9 +41,21 @@ export function DigestPreferences({
   const [format, setFormat] = useState(initial.format || 'both');
   const [erp, setErp] = useState(initialErp || '');
   const [feishuId, setFeishuId] = useState(initialFeishu || '');
+  const [feishuWebhook, setFeishuWebhook] = useState(initialFeishuWebhook || '');
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testMsg, setTestMsg] = useState('');
+  const [testOk, setTestOk] = useState(false);
+
+  const testFeishu = async () => {
+    setTesting(true); setTestMsg('');
+    const r = await testFeishuWebhook(feishuWebhook);
+    setTestOk(r.ok);
+    setTestMsg(r.ok ? '已发送 · 去飞书群看' : (r.error || '发送失败'));
+    setTesting(false);
+  };
 
   const toggle = (arr: string[], set: (v: string[]) => void, v: string) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -52,7 +65,7 @@ export function DigestPreferences({
     start(async () => {
       const r = await saveDigestPreferences(
         { modules, models, sendTime, channels: channels as DigestPreferences['channels'], format, frequency: 'daily' },
-        { erp, feishuId },
+        { erp, feishuId, feishuWebhook },
       );
       if (r.ok) setMsg(subscribed ? '偏好已更新 ✓' : '订阅成功 · 明天开始每日推送 ✓');
       else setErr(r.error);
@@ -120,12 +133,27 @@ export function DigestPreferences({
         </div>
       )}
 
-      {/* 飞书 openid(选了飞书才显示 · 可留空走群) */}
+      {/* 飞书 webhook(选了飞书才显示 · 自助粘贴) */}
       {channels.includes('feishu') && (
         <div className="mb-4">
-          <label className="text-xs font-black text-ink-soft mb-1.5 block">飞书 open_id <span className="font-normal text-muted-foreground">· 留空走群机器人</span></label>
-          <input value={feishuId} onChange={(e) => setFeishuId(e.target.value)} placeholder="ou_xxxx(可选)"
-            className="w-full px-3 py-2 border-2 border-ink rounded-lg text-sm bg-white focus:outline-none" />
+          <label className="text-xs font-black text-ink-soft mb-1.5 block">飞书群机器人 Webhook <span className="text-coral">*</span></label>
+          <input value={feishuWebhook} onChange={(e) => setFeishuWebhook(e.target.value)} placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxxx"
+            className="w-full px-3 py-2 border-2 border-ink rounded-lg text-xs bg-white focus:outline-none font-mono" />
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              type="button"
+              onClick={testFeishu}
+              disabled={testing || !feishuWebhook}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-ink rounded-lg text-xs font-bold bg-white hover:bg-bg-alt transition disabled:opacity-50"
+            >
+              {testing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              发送测试
+            </button>
+            {testMsg && <span className={`text-xs font-bold ${testOk ? 'text-green-700' : 'text-red-600'}`}>{testMsg}</span>}
+          </div>
+          <div className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
+            飞书群 → 设置 → 群机器人 → 添加「自定义机器人」→ 安全设置选「自定义关键词」填 <b className="text-ink">AI Lens</b> → 复制 Webhook 粘到这里,点「发送测试」当场验证。
+          </div>
         </div>
       )}
 

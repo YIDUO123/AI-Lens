@@ -26,6 +26,7 @@ async function main() {
   await db.execute(sql`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS feishu_id TEXT;`);
   await db.execute(sql`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS erp TEXT;`);
   await db.execute(sql`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS last_daily_sent_at TIMESTAMPTZ;`);
+  await db.execute(sql`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS feishu_webhook TEXT;`);
   await db.execute(sql`CREATE INDEX IF NOT EXISTS newsletter_user_idx ON newsletter_subscribers (user_id);`);
 
   console.log('🚀 建 news_cards 表 …');

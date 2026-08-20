@@ -12,6 +12,7 @@ import { db, newsletterSubscribers } from '@/db';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { logEvent } from '@/lib/analytics/log';
+import { sendFeishuWebhook } from '@/lib/channels/feishu';
 import type { DigestPreferences } from '@/db';
 import { DEFAULT_DIGEST_PREFERENCES } from '@/db';
 
@@ -31,15 +32,15 @@ function sanitize(input: Partial<DigestPreferences>): DigestPreferences {
 }
 
 /** 登录用户读自己的偏好(没有则返回默认 + 未订阅标记) */
-export async function getMyDigestPreferences(): Promise<{ subscribed: boolean; prefs: DigestPreferences; email: string | null; erp: string | null; feishuId: string | null }> {
+export async function getMyDigestPreferences(): Promise<{ subscribed: boolean; prefs: DigestPreferences; email: string | null; erp: string | null; feishuId: string | null; feishuWebhook: string | null }> {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) return { subscribed: false, prefs: DEFAULT_DIGEST_PREFERENCES, email: null, erp: null, feishuId: null };
+  if (!session?.user) return { subscribed: false, prefs: DEFAULT_DIGEST_PREFERENCES, email: null, erp: null, feishuId: null, feishuWebhook: null };
 
   const [row] = await db.select().from(newsletterSubscribers).where(eq(newsletterSubscribers.userId, session.user.id)).limit(1);
   if (row) {
-    return { subscribed: row.active, prefs: row.preferences || DEFAULT_DIGEST_PREFERENCES, email: row.email, erp: row.erp, feishuId: row.feishuId };
+    return { subscribed: row.active, prefs: row.preferences || DEFAULT_DIGEST_PREFERENCES, email: row.email, erp: row.erp, feishuId: row.feishuId, feishuWebhook: row.feishuWebhook };
   }
-  return { subscribed: false, prefs: { ...DEFAULT_DIGEST_PREFERENCES }, email: session.user.email || null, erp: null, feishuId: null };
+  return { subscribed: false, prefs: { ...DEFAULT_DIGEST_PREFERENCES }, email: session.user.email || null, erp: null, feishuId: null, feishuWebhook: null };
 }
 
 /**
@@ -48,7 +49,7 @@ export async function getMyDigestPreferences(): Promise<{ subscribed: boolean; p
  */
 export async function saveDigestPreferences(
   input: Partial<DigestPreferences>,
-  extra?: { erp?: string; feishuId?: string },
+  extra?: { erp?: string; feishuId?: string; feishuWebhook?: string },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) return { ok: false, error: '请先登录' };
@@ -56,9 +57,16 @@ export async function saveDigestPreferences(
   const prefs = sanitize(input);
   const erp = (extra?.erp || '').trim().slice(0, 64) || null;
   const feishuId = (extra?.feishuId || '').trim().slice(0, 128) || null;
+  const feishuWebhook = (extra?.feishuWebhook || '').trim().slice(0, 300) || null;
 
   if (prefs.channels.includes('jdme') && !erp) {
     return { ok: false, error: '选择京me 推送需要填写 ERP 账号' };
+  }
+  if (prefs.channels.includes('feishu') && !feishuWebhook) {
+    return { ok: false, error: '选择飞书推送需要粘贴群机器人 Webhook URL' };
+  }
+  if (feishuWebhook && !/^https:\/\/open\.feishu\.cn\/open-apis\/bot\/v2\/hook\//.test(feishuWebhook)) {
+    return { ok: false, error: '飞书 Webhook 格式不对(应以 https://open.feishu.cn/open-apis/bot/v2/hook/ 开头)' };
   }
 
   const email = session.user.email;
@@ -68,14 +76,14 @@ export async function saveDigestPreferences(
 
   if (existing) {
     await db.update(newsletterSubscribers)
-      .set({ preferences: prefs, erp, feishuId, active: true })
+      .set({ preferences: prefs, erp, feishuId, feishuWebhook, active: true })
       .where(eq(newsletterSubscribers.id, existing.id));
   } else {
     // email 可能已被"纯邮箱订阅"占用 → 复用那条并挂上 userId
     const [byEmail] = await db.select().from(newsletterSubscribers).where(eq(newsletterSubscribers.email, email)).limit(1);
     if (byEmail) {
       await db.update(newsletterSubscribers)
-        .set({ userId: session.user.id, preferences: prefs, erp, feishuId, active: true })
+        .set({ userId: session.user.id, preferences: prefs, erp, feishuId, feishuWebhook, active: true })
         .where(eq(newsletterSubscribers.id, byEmail.id));
     } else {
       await db.insert(newsletterSubscribers).values({
@@ -87,6 +95,7 @@ export async function saveDigestPreferences(
         preferences: prefs,
         erp,
         feishuId,
+        feishuWebhook,
         active: true,
         verified: true,
       });
@@ -107,4 +116,23 @@ export async function pauseDigest(): Promise<{ ok: boolean }> {
     await db.update(newsletterSubscribers).set({ preferences: prefs }).where(eq(newsletterSubscribers.id, row.id));
   }
   return { ok: true };
+}
+
+/** 发送一条测试消息到用户粘的飞书群 webhook · 当场验证配置 */
+export async function testFeishuWebhook(url: string): Promise<{ ok: boolean; error?: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) return { ok: false, error: '请先登录' };
+  const u = (url || '').trim();
+  if (!/^https:\/\/open\.feishu\.cn\/open-apis\/bot\/v2\/hook\//.test(u)) {
+    return { ok: false, error: 'Webhook 格式不对' };
+  }
+  try {
+    await sendFeishuWebhook(
+      'AI Lens · 飞书推送测试 ✅\n收到这条就说明配置成功,明天起每天的 AI 精编会推到这个群。',
+      u,
+    );
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e.message };
+  }
 }

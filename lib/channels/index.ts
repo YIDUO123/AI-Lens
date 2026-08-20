@@ -8,7 +8,7 @@
  */
 import { Resend } from 'resend';
 import { sendJdmeToErp, sendJdmeToGroup, sendJdmeCard, jdmeConfigured, jdmeCardTemplateId } from './jdme';
-import { sendFeishuToUser, sendFeishuWebhook, feishuConfigured } from './feishu';
+import { sendFeishuToUser, sendFeishuWebhook } from './feishu';
 import type { NewsletterSubscriber } from '@/db';
 
 export type ChannelPayload = {
@@ -51,16 +51,23 @@ async function sendJdme(sub: NewsletterSubscriber, p: ChannelPayload): Promise<S
 }
 
 async function sendFeishu(sub: NewsletterSubscriber, p: ChannelPayload): Promise<SendResult> {
-  if (!feishuConfigured()) return { channel: 'feishu', ok: false, error: '飞书未配置' };
   try {
-    if (sub.feishuId) {
-      await sendFeishuToUser(sub.feishuId, p.text, 'open_id');
-    } else if (process.env.FEISHU_WEBHOOK_URL) {
-      await sendFeishuWebhook(p.text);
-    } else {
-      return { channel: 'feishu', ok: false, error: '该用户未绑定飞书 openid' };
+    // 优先:用户自己粘的群机器人 webhook(自助,零配置)
+    if (sub.feishuWebhook) {
+      await sendFeishuWebhook(p.text, sub.feishuWebhook);
+      return { channel: 'feishu', ok: true };
     }
-    return { channel: 'feishu', ok: true };
+    // 其次:应用 1:1(需 FEISHU_APP_ID/SECRET + open_id)
+    if (sub.feishuId && (process.env.FEISHU_APP_ID && process.env.FEISHU_APP_SECRET)) {
+      await sendFeishuToUser(sub.feishuId, p.text, 'open_id');
+      return { channel: 'feishu', ok: true };
+    }
+    // 兜底:全局群 webhook(管理员配的)
+    if (process.env.FEISHU_WEBHOOK_URL) {
+      await sendFeishuWebhook(p.text);
+      return { channel: 'feishu', ok: true };
+    }
+    return { channel: 'feishu', ok: false, error: '未填写飞书群机器人 Webhook' };
   } catch (e: any) {
     return { channel: 'feishu', ok: false, error: e.message };
   }

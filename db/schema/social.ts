@@ -125,6 +125,8 @@ export const newsletterSubscribers = pgTable('newsletter_subscribers', {
   // 渠道身份 · 绑定后写入(JD 内部 京me/飞书 可用 ERP 反查)
   feishuId: text('feishu_id'),
   erp: text('erp'),
+  // 飞书群自定义机器人 Webhook URL(自助推送:用户粘贴自己群的 webhook 即可)
+  feishuWebhook: text('feishu_webhook'),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   // 周报发送时间(旧字段 · 保留兼容)

@@ -73,6 +73,7 @@ export default async function MePage() {
           initial={digest.prefs}
           initialErp={digest.erp}
           initialFeishu={digest.feishuId}
+          initialFeishuWebhook={digest.feishuWebhook}
           subscribed={digest.subscribed && digest.prefs.frequency === 'daily'}
         />
       </section>
