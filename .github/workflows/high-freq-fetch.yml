@@ -28,6 +28,15 @@ jobs:
             "${{ secrets.PROD_URL }}/api/cron/news?token=${{ secrets.CRON_SECRET }}" \
             | head -c 500
           echo ""
+      # 抓完顺手预热最近资讯的六维卡片(小批多次,避免函数超时)
+      - name: Warm news cards
+        run: |
+          for i in 1 2 3; do
+            curl -sS -m 80 \
+              "${{ secrets.PROD_URL }}/api/cron/warm-cards?n=6&token=${{ secrets.CRON_SECRET }}" \
+              | head -c 200
+            echo ""
+          done
 
   fetch-models:
     runs-on: ubuntu-latest
