@@ -8,6 +8,7 @@
  * Tab 状态通过 searchParams 保存,SEO 友好且分享有效
  */
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { NewsSidebar } from '@/components/news/news-sidebar';
 import { ReportTabs } from '@/components/news/report-tabs';
 import { ReportContainer } from '@/components/news/report-container';
@@ -36,10 +37,19 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           <h1 className="text-5xl md:text-6xl font-black tracking-[-0.03em] leading-[1.05] mb-4">
             全球 <em className="accent">AI 资讯</em>
           </h1>
-          <p className="max-w-2xl text-ink-soft leading-relaxed">
+          <p className="max-w-2xl text-ink-soft leading-relaxed mb-6">
             每日追踪 200+ 条 AI 动态,来自 OpenAI、Anthropic、HuggingFace、Hacker News 等 30+ 公开信源。
-            每条动态可点击回到原始来源 —— 我们只做过滤和归类,不做二次改写。
+            点开任意一条 → <b className="text-ink">文章概览 + STAR + 行动启示</b> 六维拆解,5 分钟读懂今天的 AI。
           </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/me"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-coral text-white border-2 border-ink rounded-lg text-sm font-black shadow-brutal-sm hover:-translate-y-0.5 hover:shadow-brutal transition"
+            >
+              📬 订阅每日精编
+            </Link>
+            <span className="text-xs text-muted-foreground">每天定时 · 10 条精选推到邮箱 / 京me / 飞书 · 可选模块与模型</span>
+          </div>
         </div>
       </section>
 

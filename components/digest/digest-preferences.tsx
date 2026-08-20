@@ -21,7 +21,7 @@ const MODELS = ['claude', 'gpt', 'gemini', 'deepseek', 'qwen', 'llama', 'grok', 
 const TIMES = ['07:00', '08:00', '09:00', '12:00', '18:00', '21:00'];
 const CHANNELS = [
   { key: 'email', label: '📧 邮件' },
-  { key: 'jdme', label: '🔔 京me' },
+  { key: 'jdme', label: '🔔 京me · 即将开放' },
   { key: 'feishu', label: '🐦 飞书' },
 ];
 
@@ -130,6 +130,7 @@ export function DigestPreferences({
           <label className="text-xs font-black text-ink-soft mb-1.5 block">京me / ERP 账号 <span className="text-coral">*</span></label>
           <input value={erp} onChange={(e) => setErp(e.target.value)} placeholder="如 lizhouyang.750"
             className="w-full px-3 py-2 border-2 border-ink rounded-lg text-sm bg-white focus:outline-none" />
+          <div className="text-[11px] text-muted-foreground mt-1.5">京me 推送需内网机器人通道 · 即将开放;当前建议先用邮件 / 飞书。</div>
         </div>
       )}
 
