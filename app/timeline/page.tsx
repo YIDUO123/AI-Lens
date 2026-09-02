@@ -51,7 +51,7 @@ export default async function TimelinePage({ searchParams }: { searchParams: Pro
           </h1>
           <p className="max-w-2xl text-ink-soft leading-relaxed">
             一页看清 AI 模型:先横向对比主流模型的能力与价格,再纵向追踪每个家族的完整代际弧线。
-            OpenAI、Anthropic、Google、Cursor、国内梯队 —— 客观数据自动更新,主观解读由人工编辑。
+            OpenAI、Anthropic、Google、DeepSeek、国内梯队 —— 客观数据自动更新,主观解读由人工编辑。
           </p>
           <p className="mt-3 text-xs text-muted-foreground italic">
             能力/价格数据每日自动抓取 · 版本条目由自动检测补充 + 编辑审核修订 · 有遗漏欢迎<a href="/about" className="text-coral font-bold hover:underline">联系告知</a>。

@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     template: '%s · AI Lens',
   },
   description:
-    'AI Lens 是一个独立运营的 AI 情报站 —— 每日追踪 200+ 条 AI 动态,深度拆解主流模型与产品,以产品经理视角输出真正值得读的信号。覆盖 OpenAI · Anthropic · Google · Cursor 等家族。',
+    'AI Lens 是一个独立运营的 AI 情报站 —— 每日追踪 200+ 条 AI 动态,深度拆解主流模型与产品,以产品经理视角输出真正值得读的信号。覆盖 OpenAI · Anthropic · Google · DeepSeek 等家族。',
   keywords: [
     'AI', '人工智能', 'AI 产品', 'AI 资讯', 'AI 情报站',
     'ChatGPT', 'Claude', 'Gemini', 'GPT-5', 'AI PM',
     '产品经理', 'AI 产品经理', '模型对比', '产品拆解',
-    'OpenAI', 'Anthropic', 'Google DeepMind', 'Cursor',
+    'OpenAI', 'Anthropic', 'Google DeepMind', 'DeepSeek',
     'AI 洞察', 'AI 观察', 'AI 分析', 'AI 编码',
   ],
   authors: [{ name: 'Alex', url: `${SITE}/about` }],
