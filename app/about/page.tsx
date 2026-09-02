@@ -182,7 +182,7 @@ export default async function AboutPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-[720px] mx-auto">
           <Reveal>
-          <a href="mailto:Lizydy@163.com" className="grid grid-cols-[56px_1fr_auto] gap-4 items-center bg-cream border-2 border-ink rounded-xl p-6 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition">
+          <a href="mailto:Lizydy@163.com" className="h-full grid grid-cols-[56px_1fr_auto] gap-4 items-center bg-cream border-2 border-ink rounded-xl p-6 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition">
             <div className="w-12 h-12 rounded-lg grid place-items-center text-white border-2 border-ink bg-gradient-to-br from-coral to-gold">
               <Mail className="w-5 h-5" />
             </div>
@@ -195,7 +195,7 @@ export default async function AboutPage() {
           </Reveal>
 
           <Reveal delay={0.12}>
-          <a href="https://github.com/YIDUO123" target="_blank" rel="noopener noreferrer" className="grid grid-cols-[56px_1fr_auto] gap-4 items-center bg-cream border-2 border-ink rounded-xl p-6 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition">
+          <a href="https://github.com/YIDUO123" target="_blank" rel="noopener noreferrer" className="h-full grid grid-cols-[56px_1fr_auto] gap-4 items-center bg-cream border-2 border-ink rounded-xl p-6 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition">
             <div className="w-12 h-12 rounded-lg grid place-items-center text-white border-2 border-ink bg-gradient-to-br from-coral to-gold">
               <Github className="w-5 h-5" />
             </div>
@@ -288,7 +288,7 @@ function StatBadge({ value, label }: { value: string; label: string }) {
 
 function ManifestoCard({ num, stat, statLabel, title, proofs }: any) {
   return (
-    <div className="bg-white border-2 border-ink rounded-2xl p-7 shadow-[4px_4px_0_#1a1a1a] relative overflow-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition flex flex-col min-h-[300px]">
+    <div className="h-full bg-white border-2 border-ink rounded-2xl p-7 shadow-[4px_4px_0_#1a1a1a] relative overflow-hidden hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition flex flex-col min-h-[300px]">
       <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.14),transparent_70%)] pointer-events-none" />
 
       <div className="font-serif text-4xl font-black text-bg-alt leading-none mb-1.5 relative">{num}</div>
@@ -314,7 +314,7 @@ function ManifestoCard({ num, stat, statLabel, title, proofs }: any) {
 
 function StoryBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white/75 backdrop-blur-sm border-2 border-ink rounded-[18px] p-10 md:p-11 shadow-[5px_5px_0_#1a1a1a] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition">
+    <div className="h-full bg-white/75 backdrop-blur-sm border-2 border-ink rounded-[18px] p-10 md:p-11 shadow-[5px_5px_0_#1a1a1a] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition">
       <h3 className="text-2xl font-black tracking-tight mb-5 pl-4 border-l-[5px] border-coral">{title}</h3>
       <div className="[&>p]:text-[15px] [&>p]:leading-[1.9] [&>p]:text-ink-soft [&>p+p]:mt-2.5">
         {children}
@@ -338,7 +338,7 @@ function ColItem({ label, title, desc }: { label: string; title: string; desc: s
 // ============================================================
 function PullQuote({ author, quote }: { author: string; quote: string }) {
   return (
-    <div className="bg-white/70 backdrop-blur-sm border-2 border-ink rounded-2xl px-5 py-4 shadow-brutal-sm">
+    <div className="h-full bg-white/70 backdrop-blur-sm border-2 border-ink rounded-2xl px-5 py-4 shadow-brutal-sm">
       <div className="text-[9px] font-black tracking-[2px] uppercase text-coral mb-1.5">{author}</div>
       <p className="text-sm font-serif italic leading-relaxed text-ink">"{quote}"</p>
     </div>
@@ -374,7 +374,7 @@ function FlowArrow() {
 
 function TechChip({ icon, name, desc }: { icon: string; name: string; desc: string }) {
   return (
-    <div className="bg-white/[0.04] border border-white/12 rounded-lg p-3.5 hover:bg-white/[0.07] hover:border-coral hover:-translate-y-0.5 transition">
+    <div className="h-full bg-white/[0.04] border border-white/12 rounded-lg p-3.5 hover:bg-white/[0.07] hover:border-coral hover:-translate-y-0.5 transition">
       <div className="text-lg mb-1.5">{icon}</div>
       <b className="block text-[13px] font-bold text-background leading-tight mb-0.5">{name}</b>
       <p className="text-[11px] text-white/50 leading-relaxed">{desc}</p>

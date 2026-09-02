@@ -18,14 +18,14 @@ const FAMILIES: { key: string; icon: string; label: string; tagline: string; lea
     lead: 'Anthropic 用"Constitutional AI + 长上下文 + Computer Use"三张牌,把 Claude 打造成专业场景的默认选择。2026 年 Opus 4.8 + MCP 生态让它在企业市场领跑。' },
   { key: 'google', icon: '🔷', label: 'Google Gemini', tagline: '大厂反攻 · 从落后到并肩',
     lead: 'Google 用了两年时间从"Bard 被吐槽"到"Gemini 2.5 Pro 挑战头部"。核心策略:百万上下文 + 极低边际成本 + 全模态。' },
-  { key: 'cursor', icon: '⚡', label: 'Cursor', tagline: 'AI 编码 IDE · 独立开发者的胜利',
-    lead: 'Cursor 从 VS Code fork 起步,3 年内成为 AI 编码工具事实标准。核心策略:先做好"补全 → 重构 → agent"的完整体验闭环。' },
+  { key: 'deepseek', icon: '🐳', label: 'DeepSeek', tagline: '开源推理 · 性价比之王',
+    lead: 'DeepSeek 用极低的 API 价格和开源权重,把强推理打成普惠品。R1 的发布改写了全球对开源模型上限的认知,MoE + 蒸馏路线让小模型也具备强推理。' },
   { key: 'domestic', icon: '🇨🇳', label: '国内梯队', tagline: '追平 → 差异化 → 局部领先',
-    lead: '2023 追平, 2024 差异化, 2025 局部领先。DeepSeek 走推理性价比, Qwen 走开源生态, 豆包走消费级闭环, Kimi 走长上下文推理。' },
+    lead: '2023 追平, 2024 差异化, 2025 局部领先。Qwen 走开源生态, 豆包走消费级闭环, Kimi 走长上下文推理。' },
 ];
 
 const FAM_COLORS: Record<string, string> = {
-  openai: '#10a37f', anthropic: '#C15F3C', google: '#4285F4', cursor: '#1a1a1a', domestic: '#DE2910',
+  openai: '#10a37f', anthropic: '#C15F3C', google: '#4285F4', deepseek: '#4D6BFE', domestic: '#DE2910',
 };
 
 export default async function TimelinePage({ searchParams }: { searchParams: Promise<SP> }) {
@@ -95,23 +95,6 @@ export default async function TimelinePage({ searchParams }: { searchParams: Pro
               <Suspense fallback={<CmpSkeleton />}>
                 <ModelComparison models={models} />
               </Suspense>
-
-              <div className="mt-2 bg-ink text-background rounded-2xl p-6 md:p-8 relative overflow-hidden">
-                <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.2),transparent_70%)] pointer-events-none" />
-                <h4 className="text-xs font-black tracking-[2px] text-coral mb-2.5">🎯 PM 结论</h4>
-                <p className="text-sm leading-relaxed text-white/80 relative">
-                  <strong className="text-white">2026 上半年的头部模型格局:三分天下但阵型不同。</strong>
-                  OpenAI 用"分层价格"覆盖开发者市场;Anthropic 用"更长上下文 + 更细粒度控制"打专业场景;
-                  Google 用"极低边际成本"抢新兴市场用户。<br /><br />
-                  <strong className="text-white">选型三条经验法则:</strong>
-                  (1) 需要 200 页以上文档理解 → Claude 4.5+ 或 Gemini 2.5 Pro;
-                  (2) 追求极致性价比 → Gemini 2.5 Flash Lite;
-                  (3) 复杂推理 + 工具调用 → GPT-5 Pro 或 Claude Opus 4.8。
-                </p>
-                <div className="mt-3 pt-3 border-t border-dashed border-white/20 text-[11px] italic font-serif text-white/40">
-                  — AI Lens 编辑部 · 2026.07 更新
-                </div>
-              </div>
             </section>
 
             {/* ============ Section 2 · 版本代际演化(客户端切换 · 零刷新)============ */}

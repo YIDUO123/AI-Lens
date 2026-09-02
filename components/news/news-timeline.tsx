@@ -134,7 +134,7 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                       <div className="flex items-center gap-2.5 flex-wrap text-xs text-muted-foreground">
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cat.bg}`}>{cat.label}</span>
                         <span className="font-semibold">· {cleanSource(it.source)}</span>
-                        <a href={`/news/card/${it.id}`} className="press inline-flex items-center gap-1 px-2.5 py-1 bg-ink text-background rounded-md text-[11px] font-black shadow-[2px_2px_0_rgba(26,26,26,0.25)] hover:bg-coral transition-colors">
+                        <a href={`/news/card/${it.id}`} className="press inline-flex items-center gap-1 px-2.5 py-1 bg-teal text-white rounded-md text-[11px] font-black shadow-[2px_2px_0_rgba(26,26,26,0.25)] hover:bg-ink transition-colors">
                           <FileSearch className="w-3 h-3" />
                           六维拆解
                         </a>

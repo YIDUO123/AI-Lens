@@ -12,7 +12,7 @@ import { db, newsItems, timelineVersions } from '@/db';
 import { desc, gte } from 'drizzle-orm';
 import { generateWithAI } from '@/lib/ai/gemini';
 
-type Family = 'openai' | 'anthropic' | 'google' | 'cursor' | 'domestic';
+type Family = 'openai' | 'anthropic' | 'google' | 'deepseek' | 'domestic';
 
 // 各家族的版本号检测模式(按优先级,一条新闻命中多个家族时都记)
 const DETECTORS: {
@@ -40,14 +40,14 @@ const DETECTORS: {
     label: (m) => `Gemini ${m[1]} ${m[2] || ''}`.trim(),
   },
   {
-    family: 'cursor',
-    pattern: /cursor[-\s]?(\d+(?:\.\d+)?)/i,
-    normalize: (m) => `cursor-${m[1]}`,
-    label: (m) => `Cursor ${m[1]}`,
+    family: 'deepseek',
+    pattern: /deepseek[- ]?(?:v|reasoner|r)?(\d+(?:\.\d+)?)/i,
+    normalize: (m) => `deepseek-${m[1]}`,
+    label: (m) => `DeepSeek ${m[1]}`,
   },
   {
     family: 'domestic',
-    pattern: /(deepseek|qwen|kimi|doubao|豆包)[- ]?(v?r?\d+(?:\.\d+)?|k\d(?:\.\d)?)/i,
+    pattern: /(qwen|kimi|doubao|豆包)[- ]?(v?r?\d+(?:\.\d+)?|k\d(?:\.\d)?)/i,
     normalize: (m) => `${m[1].toLowerCase()}-${m[2].toLowerCase()}`,
     label: (m) => `${cap(m[1])} ${m[2]}`,
   },
