@@ -44,7 +44,7 @@ export function Nav() {
       <div id="nav-scroll-sentinel" aria-hidden="true" className="absolute top-0 h-px w-full pointer-events-none" />
       <nav
         className={cn(
-          'sticky top-0 z-50 border-b-2 border-ink bg-background/95 backdrop-blur transition-shadow duration-300',
+          'sticky top-0 z-50 border-b-2 border-ink bg-background transition-shadow duration-300',
           scrolled ? 'shadow-[0_4px_0_rgba(26,26,26,0.08)]' : 'shadow-none',
         )}
       >

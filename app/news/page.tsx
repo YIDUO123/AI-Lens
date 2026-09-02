@@ -45,12 +45,12 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/me"
-              className="press inline-flex items-center gap-2 px-5 py-2.5 bg-coral text-white border-2 border-ink rounded-lg text-sm font-black shadow-brutal-sm hover:-translate-y-0.5 hover:shadow-brutal transition"
+              className="press inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-coral to-gold text-white border-2 border-ink rounded-xl text-base font-black tracking-wide shadow-brutal hover:-translate-y-0.5 hover:shadow-brutal-lg transition-all"
             >
-              <Mail className="w-4 h-4" />
+              <Mail className="w-5 h-5" />
               订阅每日精编
             </Link>
-            <span className="text-xs text-muted-foreground">每天定时 · 10 条精选推到邮箱 / 京me / 飞书 · 可选模块与模型</span>
+            <span className="text-xs text-muted-foreground">邮箱 / 微信 / 飞书 · 每天定时 10 条精选 · 可选模块与模型</span>
           </div>
         </div>
       </section>
@@ -72,7 +72,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               <ReportContainer tab={tab} activeFam={fam} />
             </Suspense>
 
-            <div id="timeline" className="mt-8 flex items-center justify-between rounded-xl border-2 border-ink bg-cream px-5 py-3.5 shadow-brutal-sm">
+            <div id="timeline" className="mt-8 flex items-center justify-between rounded-xl border-2 border-ink bg-cream px-5 py-3.5 shadow-brutal-sm scroll-mt-24">
               <div className="text-sm text-ink-soft">
                 时间线 · 按发布时间倒序 · 命中关键词自动标注 <b className="text-coral">PM 视角</b>
               </div>

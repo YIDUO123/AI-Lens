@@ -86,7 +86,7 @@ export function NewsletterForm({ source = 'unknown', compact = false }: { source
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="inline-flex items-center justify-center gap-1.5 px-5 py-3 bg-coral text-white border-2 border-ink rounded-lg text-sm font-bold shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition disabled:opacity-50 whitespace-nowrap"
+          className="press inline-flex items-center justify-center gap-1.5 px-6 py-3 bg-gradient-to-r from-coral to-gold text-white border-2 border-ink rounded-xl text-base font-black tracking-wide shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg transition-all disabled:opacity-50 whitespace-nowrap"
         >
           {status === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> :
            status === 'ok' ? <Check className="w-4 h-4" /> :

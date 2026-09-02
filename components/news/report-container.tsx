@@ -198,7 +198,7 @@ function ReportHero({ label, title, dateLine, children, variant = 'daily' }: { l
   };
 
   return (
-    <section id="report-container" className={`relative overflow-hidden rounded-2xl ${variantBg[variant]} border-2 border-ink p-7 md:p-9 shadow-brutal mb-7`}>
+    <section id="report-container" className={`relative overflow-hidden rounded-2xl ${variantBg[variant]} border-2 border-ink p-7 md:p-9 shadow-brutal mb-7 scroll-mt-24`}>
       <div className="absolute top-5 -right-8 rotate-[35deg] bg-ink text-background text-[10px] font-black tracking-widest px-10 py-1">
         {label}
       </div>
