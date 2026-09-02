@@ -1,10 +1,10 @@
 /**
  * 左侧栏 · 动态模块 + 资讯分类
- * 服务端组件,读取分类计数
+ * 服务端取分类计数,交互(切换)交给 NewsSidebarClient
  */
-import Link from 'next/link';
 import { db, newsItems } from '@/db';
 import { sql } from 'drizzle-orm';
+import { NewsSidebarClient } from '@/components/news/news-sidebar-nav';
 
 type CatKey = 'all' | 'launch' | 'industry' | 'paper' | 'tip';
 
@@ -35,85 +35,7 @@ async function getCatCounts() {
   return counts;
 }
 
-const CAT_LABELS: { key: CatKey; label: string }[] = [
-  { key: 'all', label: '全部' },
-  { key: 'launch', label: '🚀 模型 & 产品' },
-  { key: 'industry', label: '📊 行业动态' },
-  { key: 'paper', label: '📄 论文研究' },
-  { key: 'tip', label: '💡 技巧观点' },
-];
-
 export async function NewsSidebar({ activeCat, activeTab, activeFam }: { activeCat: string; activeTab: string; activeFam: string }) {
   const counts = await getCatCounts();
-
-  const buildLink = (patch: { cat?: string; tab?: string }) => {
-    const params = new URLSearchParams();
-    params.set('tab', patch.tab ?? activeTab);
-    params.set('cat', patch.cat ?? activeCat);
-    if (activeFam !== 'all') params.set('fam', activeFam);
-    // 点分类时自动跳到 timeline 区(和 "AI 资讯流" 效果一致)
-    return `/news?${params.toString()}#timeline`;
-  };
-
-  return (
-    <div className="space-y-8">
-      {/* 动态模块 */}
-      <div>
-        <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-          动态模块
-          <span className="flex-1 h-px bg-line" />
-        </div>
-        <ul className="space-y-1">
-          <li>
-            <Link
-              href="#report-container"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-ink-soft hover:bg-bg-alt hover:text-ink transition"
-            >
-              📅 报告 · 速览
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="#timeline"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-ink-soft hover:bg-bg-alt hover:text-ink transition"
-            >
-              🕐 AI 资讯流
-            </Link>
-          </li>
-        </ul>
-      </div>
-
-      {/* 资讯分类 */}
-      <div>
-        <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-          资讯分类
-          <span className="flex-1 h-px bg-line" />
-        </div>
-        <ul className="space-y-1">
-          {CAT_LABELS.map((c) => {
-            const isActive = activeCat === c.key;
-            return (
-              <li key={c.key}>
-                <Link
-                  href={buildLink({ cat: c.key })}
-                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    isActive ? 'bg-ink text-background font-bold' : 'text-ink-soft hover:bg-bg-alt hover:text-ink'
-                  }`}
-                >
-                  <span>{c.label}</span>
-                  <span
-                    className={`font-mono text-[11px] px-2 py-0.5 rounded-full ${
-                      isActive ? 'bg-white/15 text-white/75' : 'bg-bg-alt text-muted-foreground'
-                    }`}
-                  >
-                    {counts[c.key]}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </div>
-  );
+  return <NewsSidebarClient counts={counts} activeCat={activeCat} activeTab={activeTab} activeFam={activeFam} />;
 }

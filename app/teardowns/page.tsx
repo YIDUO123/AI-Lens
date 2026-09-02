@@ -64,8 +64,8 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
 
       <div className="container pb-20">
         <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
-          {/* 左侧栏 */}
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+          {/* 左侧栏 · 仅桌面端(移动端收起,减少滚动深度) */}
+          <aside className="hidden lg:block lg:sticky lg:top-24 lg:self-start">
             <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
               分析模块
               <span className="flex-1 h-px bg-line" />

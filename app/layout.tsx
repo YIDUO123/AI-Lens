@@ -3,6 +3,7 @@ import { Nav } from '@/components/nav';
 import { Footer } from '@/components/footer';
 import { PageTransition } from '@/components/page-transition';
 import { DonationBubble } from '@/components/support/donation-bubble';
+import { WelcomeTour } from '@/components/onboarding/welcome-tour';
 import { isDonationEnabled } from '@/lib/settings-read';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -124,6 +125,7 @@ export default async function RootLayout({
         <main><PageTransition>{children}</PageTransition></main>
         <Footer />
         <DonationBubble enabled={donationOn} />
+        <WelcomeTour />
         <Analytics />
         <SpeedInsights />
       </body>
