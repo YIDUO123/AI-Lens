@@ -9,7 +9,7 @@
  * - 编辑可在 /admin/timeline 审阅、修改或删除 auto- 条目
  */
 import { db, newsItems, timelineVersions } from '@/db';
-import { desc, gte } from 'drizzle-orm';
+import { desc, gte, eq } from 'drizzle-orm';
 import { generateWithAI } from '@/lib/ai/gemini';
 
 type Family = 'openai' | 'anthropic' | 'google' | 'deepseek' | 'domestic';
@@ -62,7 +62,85 @@ function cap(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export async function autoUpdateTimeline(): Promise<{ inserted: number; candidates: number; skipped: boolean }> {
+// DeepSeek 家族历史版本 · 事实数据,随 cron 幂等播种(onConflictDoNothing)
+// Cursor 家族已下线:每次运行顺带清理其旧条目
+const SEED_VERSIONS: (typeof timelineVersions.$inferInsert)[] = [
+  {
+    id: 'deepseek-v2',
+    family: 'deepseek',
+    version: 'DeepSeek V2',
+    title: '开源 MoE + MLA,把推理成本打到一个数量级以下',
+    dateLabel: '2024.05',
+    dateOrder: new Date('2024-05-01'),
+    breakthrough: false,
+    changes: ['首发 MLA 注意力架构,显存占用大幅下降', 'API 定价仅为同级模型的 1/100,开启价格战'],
+    capability: '通用对话与编码达到开源第一梯队',
+    signal: '中国团队第一次以"价格屠夫"身份进入全球视野。',
+  },
+  {
+    id: 'deepseek-v3',
+    family: 'deepseek',
+    version: 'DeepSeek V3',
+    title: '671B MoE 开源旗舰,训练效率震惊业界',
+    dateLabel: '2024.12',
+    dateOrder: new Date('2024-12-26'),
+    breakthrough: true,
+    changes: ['671B MoE,激活 37B,推理成本极低', '训练成本约 $5.6M,挑战"大模型=天价训练"的认知', '编码/数学基准直逼 GPT-4o 与 Claude 3.5 Sonnet'],
+    capability: '开源权重里首次全面对标头部闭源模型',
+    signal: '证明了顶级模型可以被"低成本+工程化"造出来。',
+  },
+  {
+    id: 'deepseek-r1',
+    family: 'deepseek',
+    version: 'DeepSeek R1',
+    title: '纯 RL 训出的推理模型,开源界的 Sputnik 时刻',
+    dateLabel: '2025.01',
+    dateOrder: new Date('2025-01-20'),
+    breakthrough: true,
+    changes: ['纯强化学习激发长链推理,无需监督微调', '数学/代码达到 OpenAI o1 同级', 'MIT 协议开源 + 蒸馏小模型全系列放出'],
+    capability: '复杂推理(数学/代码/逻辑)开源 SOTA',
+    signal: '美股 AI 叙事首次被开源权重模型动摇,推理范式从闭源溢出到全球。',
+  },
+  {
+    id: 'deepseek-v3-1',
+    family: 'deepseek',
+    version: 'DeepSeek V3.1',
+    title: '混合推理:一个模型兼顾"快答"与"深思"',
+    dateLabel: '2025.08',
+    dateOrder: new Date('2025-08-19'),
+    breakthrough: false,
+    changes: ['Think/Non-Think 混合模式,按需切换推理深度', 'Agent 工具调用与搜索能力显著增强', '上下文扩展至 128K'],
+    capability: '通用任务 + 深度推理一体化',
+    signal: '混合推理成为开源阵营的标配设计。',
+  },
+  {
+    id: 'deepseek-v3-2-exp',
+    family: 'deepseek',
+    version: 'DeepSeek V3.2-Exp',
+    title: 'DSA 稀疏注意力,API 价格再砍一半以上',
+    dateLabel: '2025.09',
+    dateOrder: new Date('2025-09-29'),
+    breakthrough: true,
+    changes: ['引入 DSA(DeepSeek Sparse Attention)稀疏注意力实验架构', '长上下文场景 API 输出价直降 50%+', '开源实验权重供社区复现'],
+    capability: '长文档/长会话场景的成本最优解',
+    signal: '注意力效率成为下一轮价格战的主战场。',
+  },
+];
+
+async function seedFamilies() {
+  // 清理已下线的 Cursor 家族
+  await db.delete(timelineVersions).where(eq(timelineVersions.family, 'cursor'));
+  // 幂等写入种子版本
+  let seeded = 0;
+  for (const v of SEED_VERSIONS) {
+    const r = await db.insert(timelineVersions).values(v).onConflictDoNothing({ target: timelineVersions.id }).returning({ id: timelineVersions.id });
+    seeded += r.length;
+  }
+  return seeded;
+}
+
+export async function autoUpdateTimeline(): Promise<{ inserted: number; candidates: number; seeded: number; skipped: boolean }> {
+  const seeded = await seedFamilies();
   const since = new Date(Date.now() - 10 * 24 * 3600 * 1000);
 
   const [recentNews, existing] = await Promise.all([
@@ -167,5 +245,5 @@ export async function autoUpdateTimeline(): Promise<{ inserted: number; candidat
     inserted++;
   }
 
-  return { inserted, candidates: candidates.size, skipped: toInsert.length === 0 };
+  return { inserted, candidates: candidates.size, seeded, skipped: toInsert.length === 0 };
 }
