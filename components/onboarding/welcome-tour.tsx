@@ -7,8 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Newspaper, Layers3, Scale, Mail, ArrowRight, Link2 } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';import { Newspaper, Layers3, Scale, Mail, ArrowRight, Link2 } from 'lucide-react';
 
 const STORAGE_KEY = 'ailens-welcome-v1';
 
@@ -75,20 +74,19 @@ export function WelcomeTour() {
   const isLast = step === STEPS.length - 1;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          key="welcome-tour"
-          initial={reduce ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-[90] grid place-items-center bg-ink/45 backdrop-blur-sm px-4"
-          onClick={dismiss}
-          role="dialog"
-          aria-modal="true"
-          aria-label="AI Lens 新手引导"
-        >
+    // 不用 AnimatePresence:退场动画一旦卡住会留下全屏隐形遮罩挡住整站;
+    // 只保留入场动画,关闭即卸载,健壮性优先
+    open && (
+      <motion.div
+        initial={reduce ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-[90] grid place-items-center bg-ink/45 backdrop-blur-sm px-4"
+        onClick={dismiss}
+        role="dialog"
+        aria-modal="true"
+        aria-label="AI Lens 新手引导"
+      >
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 24, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -112,43 +110,40 @@ export function WelcomeTour() {
               <current.icon className="w-6 h-6" />
             </div>
 
-            {/* 内容(切换时淡入) */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={step}
-                initial={reduce ? false : { opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={reduce ? undefined : { opacity: 0, x: -12 }}
-                transition={{ duration: 0.22 }}
-              >
-                <h3 className="text-xl font-black tracking-tight leading-snug mb-2.5 pr-6">
-                  {current.title}
-                </h3>
-                <p className="text-sm text-ink-soft leading-relaxed mb-5">{current.desc}</p>
+            {/* 内容(切换时淡入 · 不用 AnimatePresence:连点时退场动画可能卡死导致内容消失) */}
+            <motion.div
+              key={step}
+              initial={reduce ? false : { opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.22 }}
+            >
+              <h3 className="text-xl font-black tracking-tight leading-snug mb-2.5 pr-6">
+                {current.title}
+              </h3>
+              <p className="text-sm text-ink-soft leading-relaxed mb-5">{current.desc}</p>
 
-                {/* 6 维拆解 · 迷你真卡片(与站内拆解卡同构) */}
-                {current.visual === 'six-dims' && (
-                  <div className="mb-5 rounded-2xl border-2 border-ink bg-white overflow-hidden shadow-brutal-sm">
-                    <div className="flex items-center justify-between px-3.5 py-2 bg-ink text-background text-[10px] font-black tracking-widest">
-                      <span>SIX-DIM CARD · 六维拆解卡</span>
-                      <span className="text-coral">2 min read</span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-px bg-line">
-                      {SIX_DIMS.map((d) => (
-                        <div key={d.label} className="bg-cream px-2.5 py-2">
-                          <div className={`text-[11px] font-black leading-tight ${d.tint}`}>{d.label}</div>
-                          <div className="text-[9px] text-muted-foreground leading-tight mt-0.5">{d.hint}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-1.5 px-3.5 py-2 bg-bg-alt text-[10px] text-muted-foreground">
-                      <Link2 className="w-3 h-3" />
-                      每格信息可溯源 · 点回原文核实
-                    </div>
+              {/* 6 维拆解 · 迷你真卡片(与站内拆解卡同构) */}
+              {current.visual === 'six-dims' && (
+                <div className="mb-5 rounded-2xl border-2 border-ink bg-white overflow-hidden shadow-brutal-sm">
+                  <div className="flex items-center justify-between px-3.5 py-2 bg-ink text-background text-[10px] font-black tracking-widest">
+                    <span>SIX-DIM CARD · 六维拆解卡</span>
+                    <span className="text-coral">2 min read</span>
                   </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+                  <div className="grid grid-cols-3 gap-px bg-line">
+                    {SIX_DIMS.map((d) => (
+                      <div key={d.label} className="bg-cream px-2.5 py-2">
+                        <div className={`text-[11px] font-black leading-tight ${d.tint}`}>{d.label}</div>
+                        <div className="text-[9px] text-muted-foreground leading-tight mt-0.5">{d.hint}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3.5 py-2 bg-bg-alt text-[10px] text-muted-foreground">
+                    <Link2 className="w-3 h-3" />
+                    每格信息可溯源 · 点回原文核实
+                  </div>
+                </div>
+              )}
+            </motion.div>
 
             {/* 底部:进度点 + 按钮 */}
             <div className="flex items-center justify-between gap-3">
@@ -197,7 +192,6 @@ export function WelcomeTour() {
             </div>
           </motion.div>
         </motion.div>
-      )}
-    </AnimatePresence>
+      )
   );
 }
