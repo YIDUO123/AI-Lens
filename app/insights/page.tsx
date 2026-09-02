@@ -33,7 +33,7 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
     <>
       {/* 页头 */}
       <section className="container">
-        <div className="border-b-2 border-ink py-15 pb-10 pt-15 mb-10">
+        <div className="border-b-2 border-ink pt-12 pb-10 mb-10">
           <span className="inline-block bg-ink text-background px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest rounded mb-4">
             Deep Insights · PM 观察笔记
           </span>

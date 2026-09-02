@@ -30,7 +30,7 @@ export default async function AboutPage() {
     <>
       {/* Hero */}
       <section className="container">
-        <div className="grid gap-16 md:grid-cols-[1.4fr_1fr] items-center py-15 pt-20">
+        <div className="grid gap-16 md:grid-cols-[1.4fr_1fr] items-center py-12 pt-20">
           <div>
             <h1 className="text-5xl md:text-6xl font-black leading-[1.02] tracking-[-0.04em] mb-5">
               尝试看清<br />

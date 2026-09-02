@@ -119,6 +119,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-screen">
+        <div className="noise-overlay" aria-hidden="true" />
         <Nav />
         <main><PageTransition>{children}</PageTransition></main>
         <Footer />

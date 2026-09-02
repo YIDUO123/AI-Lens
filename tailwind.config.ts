@@ -24,6 +24,7 @@ const config: Config = {
           foreground: 'hsl(var(--muted-foreground))',
         },
         cream: 'hsl(var(--cream))',
+        'bg-alt': 'hsl(var(--bg-alt))',
         coral: {
           DEFAULT: 'hsl(var(--coral))',
           soft: 'hsl(var(--coral-soft))',

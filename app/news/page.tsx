@@ -9,6 +9,7 @@
  */
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { Mail } from 'lucide-react';
 import { NewsSidebar } from '@/components/news/news-sidebar';
 import { ReportTabs } from '@/components/news/report-tabs';
 import { ReportContainer } from '@/components/news/report-container';
@@ -30,7 +31,7 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
     <>
       {/* 页头 */}
       <section className="container">
-        <div className="border-b-2 border-ink py-15 pb-10 pt-15 mb-10">
+        <div className="border-b-2 border-ink pt-12 pb-10 mb-10">
           <span className="inline-block bg-ink text-background px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest rounded mb-4">
             Daily News · 每日更新
           </span>
@@ -44,9 +45,10 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/me"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-coral text-white border-2 border-ink rounded-lg text-sm font-black shadow-brutal-sm hover:-translate-y-0.5 hover:shadow-brutal transition"
+              className="press inline-flex items-center gap-2 px-5 py-2.5 bg-coral text-white border-2 border-ink rounded-lg text-sm font-black shadow-brutal-sm hover:-translate-y-0.5 hover:shadow-brutal transition"
             >
-              📬 订阅每日精编
+              <Mail className="w-4 h-4" />
+              订阅每日精编
             </Link>
             <span className="text-xs text-muted-foreground">每天定时 · 10 条精选推到邮箱 / 京me / 飞书 · 可选模块与模型</span>
           </div>

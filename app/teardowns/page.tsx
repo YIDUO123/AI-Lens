@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { headers } from 'next/headers';
+import { Sparkles, LibraryBig, Lightbulb } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { getAllDailyPicks, getPublishedTeardowns, getInteractionCountsBatch, getUserInteractions } from '@/lib/db/queries';
 import { DailyPicksSection } from '@/components/teardowns/daily-picks-section';
@@ -46,7 +47,7 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <section className="container">
-        <div className="border-b-2 border-ink py-15 pb-10 pt-15 mb-10">
+        <div className="border-b-2 border-ink pt-12 pb-10 mb-10">
           <span className="inline-block bg-ink text-background px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest rounded mb-4">
             Deep teardown · 每日刷新
           </span>
@@ -70,12 +71,12 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
               <span className="flex-1 h-px bg-line" />
             </div>
             <ul className="space-y-1 mb-8">
-              <NavItem href="#picks" icon="🌟" label="每日精选" count={picks.length} />
-              <NavItem href="#library" icon="📚" label="深度拆解库" count={teardowns.length} />
+              <NavItem href="#picks" icon={<Sparkles className="w-4 h-4" />} label="每日精选" count={picks.length} />
+              <NavItem href="#library" icon={<LibraryBig className="w-4 h-4" />} label="深度拆解库" count={teardowns.length} />
             </ul>
 
             <div className="bg-bg-alt rounded-xl p-4 text-xs leading-relaxed text-ink-soft">
-              <b className="text-ink block mb-1.5">💡 关于本页数据</b>
+              <b className="text-ink inline-flex items-center gap-1.5 mb-1.5"><Lightbulb className="w-3.5 h-3.5" /> 关于本页数据</b>
               每日精选从 HackerNews / Product Hunt 自动抓取,补充 6 维分析在 admin 后台。<br />
               能力评级、"编辑观点"由 AI Lens 编辑撰写。
             </div>
@@ -158,14 +159,14 @@ export default async function TeardownsPage({ searchParams }: { searchParams: Pr
 // 辅助组件
 // ============================================================
 
-function NavItem({ href, icon, label, count }: { href: string; icon: string; label: string; count: number }) {
+function NavItem({ href, icon, label, count }: { href: string; icon: React.ReactNode; label: string; count: number }) {
   return (
     <li>
       <a
         href={href}
         className="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-semibold text-ink-soft hover:bg-bg-alt hover:text-ink transition border-l-[3px] border-l-transparent hover:border-l-coral"
       >
-        <span>{icon} {label}</span>
+        <span className="flex items-center gap-2">{icon} {label}</span>
         <span className="font-mono text-[11px] text-muted-foreground">{count}</span>
       </a>
     </li>
