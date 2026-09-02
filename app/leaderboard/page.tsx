@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { db, articles, teardowns, dailyPicks, likes, saves, comments } from '@/db';
 import { desc, eq, and, sql, inArray } from 'drizzle-orm';
 import { Flame, Eye, MessageCircle, TrendingUp } from 'lucide-react';
+import { RevealGroup, RevealItem } from '@/components/motion/reveal';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
 
@@ -102,11 +103,11 @@ export default async function LeaderboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Board icon={<Flame className="w-4 h-4" />} title="综合最热" tint="text-coral" rows={hot} metric="score" />
-        <Board icon={<Eye className="w-4 h-4" />} title="阅读最多" tint="text-blue-600" rows={viewed} metric="views" />
-        <Board icon={<MessageCircle className="w-4 h-4" />} title="讨论最多" tint="text-teal-600" rows={talked} metric="comments" />
-      </div>
+      <RevealGroup className="grid gap-6 md:grid-cols-3">
+        <RevealItem><Board icon={<Flame className="w-4 h-4" />} title="综合最热" tint="text-coral" rows={hot} metric="score" /></RevealItem>
+        <RevealItem><Board icon={<Eye className="w-4 h-4" />} title="阅读最多" tint="text-blue-600" rows={viewed} metric="views" /></RevealItem>
+        <RevealItem><Board icon={<MessageCircle className="w-4 h-4" />} title="讨论最多" tint="text-teal-600" rows={talked} metric="comments" /></RevealItem>
+      </RevealGroup>
 
       <p className="mt-10 text-center text-xs text-muted-foreground">
         评分公式:<code className="font-mono">score = likes×3 + saves×5 + comments×4 + views×0.1</code>

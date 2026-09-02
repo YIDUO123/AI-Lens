@@ -7,7 +7,7 @@
 import { useEffect, useState, useMemo } from 'react';
 
 const CAT_STYLES: Record<string, { label: string; color: string }> = {
-  'ai-models':   { label: 'MODEL',    color: '#FF6B35' },
+  'ai-models':   { label: 'MODEL',    color: '#F0561B' },
   'ai-products': { label: 'PRODUCT',  color: '#0E5C5A' },
   'industry':    { label: 'INDUSTRY', color: '#2F6FEB' },
   'paper':       { label: 'PAPER',    color: '#B8860B' },

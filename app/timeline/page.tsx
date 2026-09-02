@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getFamilyTimeline, getFamilyCounts, getAllModels } from '@/lib/db/queries';
 import { ModelComparison } from '@/components/teardowns/model-comparison';
+import { RevealGroup, RevealItem } from '@/components/motion/reveal';
 import { Suspense } from 'react';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
@@ -207,11 +208,13 @@ async function FamilyPanel({ famKey }: { famKey: string }) {
       <div className="relative pl-11">
         <div className="absolute left-3.5 top-3 bottom-3 w-0.5 bg-gradient-to-b from-ink to-line" />
 
-        <div className="space-y-8">
+        <RevealGroup className="space-y-8">
           {versions.map((v, i) => (
-            <TimelineItem key={v.id} v={v} isLatest={i === 0} />
+            <RevealItem key={v.id}>
+              <TimelineItem v={v} isLatest={i === 0} />
+            </RevealItem>
           ))}
-        </div>
+        </RevealGroup>
       </div>
     </>
   );

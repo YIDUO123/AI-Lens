@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { db, articles } from '@/db';
 import { desc, eq } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
+import { RevealGroup, RevealItem } from '@/components/motion/reveal';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
 
@@ -69,10 +70,11 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
             <p className="text-sm text-muted-foreground">试试其他分类</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <RevealGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {nonFeatured.map((a, i) => {
               const catInfo = CAT_MAP[a.category] || CAT_MAP.thinking;
               return (
+                <RevealItem key={a.id}>
                 <Link
                   key={a.id}
                   href={`/insights/${a.slug}`}
@@ -99,9 +101,10 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
                     <span className="font-bold text-ink group-hover:text-coral">继续读 →</span>
                   </div>
                 </Link>
+                </RevealItem>
               );
             })}
-          </div>
+          </RevealGroup>
         )}
       </div>
     </>
