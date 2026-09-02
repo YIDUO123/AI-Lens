@@ -5,8 +5,8 @@
  * 5 个家族的时间线数据全部由服务端一次性传入,
  * tab 切换纯本地状态 · 零网络请求 · 不跳顶不刷新;URL 用 replaceState 同步保证可分享
  */
-import { useState } from 'react';
-import { RevealGroup, RevealItem } from '@/components/motion/reveal';
+import { Reveal } from '@/components/motion/reveal';
+import { useFamilyState } from '@/components/timeline/family-state';
 
 export type TimelineVersionDTO = {
   id: string;
@@ -24,28 +24,18 @@ type FamilyMeta = { key: string; icon: string; label: string; tagline: string; l
 
 export function FamilyTimeline({
   families,
-  counts,
   timelines,
-  initialFam,
   famColors,
 }: {
   families: FamilyMeta[];
-  counts: Record<string, number>;
   timelines: Record<string, TimelineVersionDTO[]>;
-  initialFam: string;
   famColors: Record<string, string>;
 }) {
-  const [activeFam, setActiveFam] = useState(initialFam);
+  const { activeFam, setFam, counts } = useFamilyState();
 
   const switchFam = (key: string) => {
     if (key === activeFam) return;
-    setActiveFam(key);
-    // 同步 URL(不触发导航),保持可分享/可刷新
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.set('fam', key);
-      window.history.replaceState(null, '', url.toString());
-    } catch {}
+    setFam(key);
   };
 
   const family = families.find((f) => f.key === activeFam) || families[0];
@@ -96,13 +86,13 @@ export function FamilyTimeline({
       <div key={`tl-${family.key}`} className="relative pl-11">
         <div className="absolute left-3.5 top-3 bottom-3 w-0.5 bg-gradient-to-b from-ink to-line" />
 
-        <RevealGroup className="space-y-8">
+        <Reveal className="space-y-8">
           {versions.map((v, i) => (
-            <RevealItem key={v.id}>
+            <Reveal key={v.id} delay={Math.min(i * 0.05, 0.3)}>
               <TimelineItem v={v} isLatest={i === 0} />
-            </RevealItem>
+            </Reveal>
           ))}
-        </RevealGroup>
+        </Reveal>
       </div>
     </>
   );

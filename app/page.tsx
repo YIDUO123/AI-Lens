@@ -39,8 +39,8 @@ export default function HomePage() {
             WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 40%, black 40%, transparent 100%)',
           }}
         />
-        <div className="absolute -top-20 right-[8%] w-96 h-96 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.12),transparent_70%)] pointer-events-none" />
-        <div className="absolute bottom-[15%] left-[5%] w-64 h-64 rounded-full bg-[radial-gradient(circle,rgba(47,111,235,0.08),transparent_70%)] pointer-events-none" />
+        <div className="absolute -top-20 right-[8%] w-96 h-96 rounded-full blob-float bg-[radial-gradient(circle,rgba(255,107,53,0.12),transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-[15%] left-[5%] w-64 h-64 rounded-full blob-float bg-[radial-gradient(circle,rgba(47,111,235,0.08),transparent_70%)] pointer-events-none [animation-delay:-7s]" />
 
         <div className="container relative">
           <div className="grid items-center gap-12 lg:gap-16 lg:grid-cols-[1.05fr_1fr] max-w-6xl mx-auto">

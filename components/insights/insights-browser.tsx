@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { RevealGroup, RevealItem } from '@/components/motion/reveal';
+import { Reveal } from '@/components/motion/reveal';
 
 const CAT_MAP: Record<string, { label: string; classes: string }> = {
   thinking:   { label: '🧭 行业思考', classes: 'bg-ink text-white' },
@@ -70,11 +70,11 @@ export function InsightsBrowser({
           <p className="text-sm text-muted-foreground">试试其他分类</p>
         </div>
       ) : (
-        <RevealGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {visible.map((a, i) => {
             const catInfo = CAT_MAP[a.category] || CAT_MAP.thinking;
             return (
-              <RevealItem key={a.id}>
+              <Reveal key={a.id} delay={Math.min(i * 0.05, 0.3)}>
                 <Link
                   href={`/insights/${a.slug}`}
                   className="group relative bg-cream border-2 border-ink rounded-2xl p-7 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition-all flex flex-col min-h-[260px]"
@@ -100,10 +100,10 @@ export function InsightsBrowser({
                     <span className="font-bold text-ink group-hover:text-coral">继续读 →</span>
                   </div>
                 </Link>
-              </RevealItem>
+              </Reveal>
             );
           })}
-        </RevealGroup>
+        </div>
       )}
     </>
   );

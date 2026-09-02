@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getFamilyTimeline, getFamilyCounts, getAllModels } from '@/lib/db/queries';
 import { ModelComparison } from '@/components/teardowns/model-comparison';
 import { FamilyTimeline } from '@/components/timeline/family-timeline';
+import { FamilyStateProvider, FamilySidebar } from '@/components/timeline/family-state';
 import { Suspense } from 'react';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
@@ -59,9 +60,15 @@ export default async function TimelinePage({ searchParams }: { searchParams: Pro
       </section>
 
       <div className="container pb-20">
+        <FamilyStateProvider initialFam={activeFam} counts={counts}>
         <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
-          {/* 左侧栏 · 仅桌面端(移动端用页内 tab,避免冗余) */}
+          {/* 左侧栏 · 家族导航 + 数据说明(桌面端;与页内 tab 共享同一状态) */}
           <aside className="hidden lg:block lg:sticky lg:top-24 lg:self-start">
+            <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              家族切换
+              <span className="flex-1 h-px bg-line" />
+            </div>
+            <FamilySidebar families={FAMILIES} />
             <div className="bg-bg-alt rounded-xl p-4 text-xs leading-relaxed text-ink-soft">
               <b className="text-ink block mb-1.5">💡 关于本页数据</b>
               能力/价格来自 OpenRouter 每日同步;版本时间线由新闻自动检测补充,编辑审核修订。
@@ -117,13 +124,12 @@ export default async function TimelinePage({ searchParams }: { searchParams: Pro
 
             <FamilyTimeline
               families={FAMILIES}
-              counts={counts}
               timelines={timelines}
-              initialFam={activeFam}
               famColors={FAM_COLORS}
             />
           </main>
         </div>
+        </FamilyStateProvider>
       </div>
     </>
   );

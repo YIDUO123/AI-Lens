@@ -5,6 +5,7 @@ import { getLatestNews, getLatestNewsByCategory, getInteractionCountsBatch, getU
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
+import { FileSearch, ArrowUpRight } from 'lucide-react';
 
 const PM_RULES = [
   { kw: ['agent', 'agents', '智能体', 'browser use', 'computer use'], insight: 'Agent 是当下最卷的赛道。核心问题:通用能力和垂直场景的平衡。' },
@@ -133,8 +134,16 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                       <div className="flex items-center gap-2.5 flex-wrap text-xs text-muted-foreground">
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cat.bg}`}>{cat.label}</span>
                         <span className="font-semibold">· {cleanSource(it.source)}</span>
-                        <a href={`/news/card/${it.id}`} className="text-coral font-bold hover:underline">六维拆解 →</a>
-                        {it.url && <a href={it.url} target="_blank" rel="noopener noreferrer" className="hover:text-coral">原文 ↗</a>}
+                        <a href={`/news/card/${it.id}`} className="press inline-flex items-center gap-1 px-2.5 py-1 bg-ink text-background rounded-md text-[11px] font-black shadow-[2px_2px_0_rgba(26,26,26,0.25)] hover:bg-coral transition-colors">
+                          <FileSearch className="w-3 h-3" />
+                          六维拆解
+                        </a>
+                        {it.url && (
+                          <a href={it.url} target="_blank" rel="noopener noreferrer" className="press inline-flex items-center gap-0.5 px-2.5 py-1 bg-white border-[1.5px] border-line rounded-md text-[11px] font-bold text-ink-soft hover:border-ink hover:text-ink transition-colors">
+                            原文
+                            <ArrowUpRight className="w-3 h-3" />
+                          </a>
+                        )}
                       </div>
                       {insight && (
                         <div className="mt-3 px-3.5 py-2.5 bg-orange-50 border-l-[3px] border-coral rounded-r-md text-[12.5px] leading-relaxed text-ink-soft">

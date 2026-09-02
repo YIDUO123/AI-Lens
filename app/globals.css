@@ -136,5 +136,15 @@
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .page-enter { animation: none; }
+  .blob-float { animation: none !important; }
   * { transition-duration: 0.01ms !important; }
+}
+
+/* 光晕缓慢漂浮 · 只动 transform · 配合 about/hero 的径向光晕 */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes blobFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(-14px, 18px) scale(1.06); }
+  }
+  .blob-float { animation: blobFloat 14s ease-in-out infinite; }
 }

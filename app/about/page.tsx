@@ -3,6 +3,7 @@ import { Mail, Github } from 'lucide-react';
 import { unstable_cache } from 'next/cache';
 import { db, articles, teardowns, timelineVersions } from '@/db';
 import { sql, eq } from 'drizzle-orm';
+import { Reveal } from '@/components/motion/reveal';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
 
@@ -49,8 +50,9 @@ export default async function AboutPage() {
           </div>
 
           {/* 主理人卡 */}
+          <Reveal delay={0.15}>
           <div className="bg-cream border-2 border-ink rounded-2xl p-7 shadow-brutal relative overflow-hidden">
-            <div className="absolute -top-14 -right-14 w-52 h-52 rounded-full bg-[radial-gradient(circle,rgba(255,107,53,0.22),transparent_70%)] pointer-events-none" />
+            <div className="absolute -top-14 -right-14 w-52 h-52 rounded-full blob-float bg-[radial-gradient(circle,rgba(255,107,53,0.22),transparent_70%)] pointer-events-none" />
             <div className="grid grid-cols-[100px_1fr] gap-5 items-center pb-5 mb-5 border-b border-dashed border-line relative">
               <img
                 src="/avatar.jpg"
@@ -74,6 +76,7 @@ export default async function AboutPage() {
               </p>
             </div>
           </div>
+          </Reveal>
         </div>
       </section>
 
@@ -96,22 +99,28 @@ export default async function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <Reveal>
             <ManifestoCard num="01" stat="30+" statLabel="公开信源" title="来源可回溯" proofs={[
               '每条资讯"·来源"可点击跳原网站',
               '侧栏实时汇总 Top 12 信源',
               '模型参数直连 OpenRouter,可核对',
             ]} />
+            </Reveal>
+            <Reveal delay={0.1}>
             <ManifestoCard num="02" stat="6 维" statLabel="分析框架" title="观点有态度" proofs={[
               '每个精选:定位/痛点/解法/亮点/VC 灵感/商业',
               '每个对比:数据自动 + PM 结论手写',
               '每篇长文:作者 · 日期 · 阅读时长明标',
             ]} />
+            </Reveal>
+            <Reveal delay={0.2}>
             <ManifestoCard num="03" stat="4 条" statLabel="自动化管道" title="更新有节奏" proofs={[
               '资讯流 · 每 30 分钟拉 200 条',
               '模型对比 · 每 6 小时刷 22 个',
               '每日精选 · 每日 UTC 08:13 抓 Top 10',
               '邮件周报 · 每周日 20:00 一封',
             ]} />
+            </Reveal>
           </div>
         </div>
       </section>
@@ -134,23 +143,27 @@ export default async function AboutPage() {
 
           {/* 双列并排:两个故事块并列(响应式:小屏堆叠)*/}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Reveal>
             <StoryBlock title="为什么做 AI Lens?">
               <p>在 AI 行业信息爆炸的当下,绝大多数人都面临同一种困境:每天摄入大量碎片化资讯,却始终难辨价值、难抓核心,看得越多,反而越容易迷失方向、消耗灵感。</p>
               <p>这也是我最初入门时的真实感受。因此我搭建了 AI Lens,希望以产品经理的视角,对全球 AI 动态做筛选、梳理与拆解,帮大家过滤噪音、高效同步行业进展。</p>
               <p>在持续输入的同时,我也会输出独立的产品拆解与行业观点,不止做信息的传递者,更想做思考的同行者,也欢迎每一位读者在这里交流想法、碰撞思路。</p>
             </StoryBlock>
+            </Reveal>
 
+            <Reveal delay={0.12}>
             <StoryBlock title="我希望 AI Lens 成为什么?">
               <p>短期来看,它是一个能切实解决问题的实用入口 —— 让每一位想了解 AI、深耕 AI 的人,都能在这里高效获取有价值的信息,省下筛选信息的时间,真正有所收获。</p>
               <p>长期来看,我希望它成长为一个有温度、有思想、有意思的 AI 同好社区。没有冗余的流量噪音,没有空泛的行业套话,大家可以在这里平等交流、深度思考,共同探索 AI 的更多可能性。</p>
             </StoryBlock>
+            </Reveal>
           </div>
 
           {/* 3 条信念 · 底部横排 · 补齐视觉密度 */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <PullQuote author="信念一" quote="人人都是产品经理 · 产品本应为人民。" />
-            <PullQuote author="信念二" quote="AI 时代的机遇 · 是时刻关注前沿 · 尝试发展。" />
-            <PullQuote author="信念三" quote="做有理想 · 有素养 · 有能力的产品经理。" />
+            <Reveal><PullQuote author="信念一" quote="人人都是产品经理 · 产品本应为人民。" /></Reveal>
+            <Reveal delay={0.1}><PullQuote author="信念二" quote="AI 时代的机遇 · 是时刻关注前沿 · 尝试发展。" /></Reveal>
+            <Reveal delay={0.2}><PullQuote author="信念三" quote="做有理想 · 有素养 · 有能力的产品经理。" /></Reveal>
           </div>
         </div>
       </section>
@@ -168,6 +181,7 @@ export default async function AboutPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-[720px] mx-auto">
+          <Reveal>
           <a href="mailto:Lizydy@163.com" className="grid grid-cols-[56px_1fr_auto] gap-4 items-center bg-cream border-2 border-ink rounded-xl p-6 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition">
             <div className="w-12 h-12 rounded-lg grid place-items-center text-white border-2 border-ink bg-gradient-to-br from-coral to-gold">
               <Mail className="w-5 h-5" />
@@ -178,7 +192,9 @@ export default async function AboutPage() {
             </div>
             <span className="text-xl text-ink">→</span>
           </a>
+          </Reveal>
 
+          <Reveal delay={0.12}>
           <a href="https://github.com/YIDUO123" target="_blank" rel="noopener noreferrer" className="grid grid-cols-[56px_1fr_auto] gap-4 items-center bg-cream border-2 border-ink rounded-xl p-6 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition">
             <div className="w-12 h-12 rounded-lg grid place-items-center text-white border-2 border-ink bg-gradient-to-br from-coral to-gold">
               <Github className="w-5 h-5" />
@@ -189,6 +205,7 @@ export default async function AboutPage() {
             </div>
             <span className="text-xl text-ink">→</span>
           </a>
+          </Reveal>
         </div>
       </section>
 
@@ -211,7 +228,7 @@ export default async function AboutPage() {
 
             <a
               href="/support"
-              className="inline-flex items-center gap-2 px-5 py-3 bg-coral text-white border-2 border-ink rounded-xl font-bold shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition whitespace-nowrap"
+              className="press inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-coral to-gold text-white border-2 border-ink rounded-xl text-base font-black tracking-wide shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg transition-all whitespace-nowrap"
             >
               ☕ 打赏支持
             </a>
@@ -239,12 +256,13 @@ export default async function AboutPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <TechChip icon="⚛️" name="Next.js 15" desc="React 19 + TypeScript" />
-            <TechChip icon="💾" name="Supabase" desc="Postgres · 16 表" />
-            <TechChip icon="🤖" name="AI 4 通道" desc="智谱 · DeepSeek 等" />
-            <TechChip icon="⏰" name="GitHub Actions" desc="30 分钟自动抓取" />
+            <Reveal><TechChip icon="⚛️" name="Next.js 15" desc="React 19 + TypeScript" /></Reveal>
+            <Reveal delay={0.08}><TechChip icon="💾" name="Supabase" desc="Postgres · 16 表" /></Reveal>
+            <Reveal delay={0.16}><TechChip icon="🤖" name="AI 4 通道" desc="智谱 · DeepSeek 等" /></Reveal>
+            <Reveal delay={0.24}><TechChip icon="⏰" name="GitHub Actions" desc="30 分钟自动抓取" /></Reveal>
           </div>
 
+          <Reveal>
           <div className="mt-12 pt-8 border-t border-dashed border-white/15 text-center">
             <p className="text-2xl md:text-3xl font-black tracking-tight leading-tight max-w-2xl mx-auto text-white/85">
               技术是<em className="accent">路线</em> · 不是<em className="accent">目的</em>。
@@ -253,6 +271,7 @@ export default async function AboutPage() {
               用对工具 · 持续做下去。
             </p>
           </div>
+          </Reveal>
         </div>
       </section>
     </>
