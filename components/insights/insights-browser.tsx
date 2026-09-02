@@ -8,7 +8,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Reveal } from '@/components/motion/reveal';
 
 const CAT_MAP: Record<string, { label: string; classes: string }> = {
   thinking:   { label: '🧭 行业思考', classes: 'bg-ink text-white' },
@@ -74,7 +73,7 @@ export function InsightsBrowser({
           {visible.map((a, i) => {
             const catInfo = CAT_MAP[a.category] || CAT_MAP.thinking;
             return (
-              <Reveal key={a.id} delay={Math.min(i * 0.05, 0.3)}>
+              <div key={a.id} className="card-enter" style={{ animationDelay: `${Math.min(i * 50, 300)}ms` }}>
                 <Link
                   href={`/insights/${a.slug}`}
                   className="group relative bg-cream border-2 border-ink rounded-2xl p-7 shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition-all flex flex-col min-h-[260px]"
@@ -100,7 +99,7 @@ export function InsightsBrowser({
                     <span className="font-bold text-ink group-hover:text-coral">继续读 →</span>
                   </div>
                 </Link>
-              </Reveal>
+              </div>
             );
           })}
         </div>

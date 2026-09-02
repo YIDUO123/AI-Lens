@@ -5,7 +5,6 @@
  * 5 个家族的时间线数据全部由服务端一次性传入,
  * tab 切换纯本地状态 · 零网络请求 · 不跳顶不刷新;URL 用 replaceState 同步保证可分享
  */
-import { Reveal } from '@/components/motion/reveal';
 import { useFamilyState } from '@/components/timeline/family-state';
 
 export type TimelineVersionDTO = {
@@ -86,13 +85,13 @@ export function FamilyTimeline({
       <div key={`tl-${family.key}`} className="relative pl-11">
         <div className="absolute left-3.5 top-3 bottom-3 w-0.5 bg-gradient-to-b from-ink to-line" />
 
-        <Reveal className="space-y-8">
+        <div className="space-y-8">
           {versions.map((v, i) => (
-            <Reveal key={v.id} delay={Math.min(i * 0.05, 0.3)}>
+            <div key={v.id} className="card-enter" style={{ animationDelay: `${Math.min(i * 60, 300)}ms` }}>
               <TimelineItem v={v} isLatest={i === 0} />
-            </Reveal>
+            </div>
           ))}
-        </Reveal>
+        </div>
       </div>
     </>
   );

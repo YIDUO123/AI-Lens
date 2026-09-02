@@ -147,4 +147,11 @@
     50%      { transform: translate(-14px, 18px) scale(1.06); }
   }
   .blob-float { animation: blobFloat 14s ease-in-out infinite; }
+
+  /* 动态切换内容的入场动画 · 纯 CSS 声明式,挂载即播放,无 JS 依赖不可能卡住 */
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .card-enter { animation: cardIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
 }
