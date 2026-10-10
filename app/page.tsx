@@ -269,15 +269,16 @@ async function TodayDigest() {
   return (
     <RevealGroup>
       <RevealItem>
-        <div className="flex items-end justify-between flex-wrap gap-2 pb-3.5 mb-5 border-b-2 border-dashed border-line">
-          <div>
-            <div className="text-[10px] font-black tracking-[2px] uppercase text-coral mb-1">Today&apos;s must-read · 今日必读</div>
-            <h2 className="text-2xl md:text-3xl font-black tracking-[-0.02em]">过去 24 小时,最值得看的 <em className="accent">5 条</em></h2>
+          <div className="flex items-end justify-between flex-wrap gap-2 pb-3.5 mb-5 border-b-2 border-dashed border-line">
+            <div>
+              <div className="text-[10px] font-black tracking-[2px] uppercase text-coral mb-1">Today&apos;s must-read · 今日必读</div>
+              <h2 className="text-2xl md:text-3xl font-black tracking-[-0.02em]">过去 24 小时,最值得看的 <em className="accent">5 条</em></h2>
+            </div>
+            <div className="flex items-center gap-4 text-sm font-bold text-ink-soft">
+              <Link href="/daily" className="link-underline hover:text-ink transition-colors">往期日报</Link>
+              <Link href="/news" className="link-underline hover:text-ink transition-colors">看全部 →</Link>
+            </div>
           </div>
-          <Link href="/news" className="link-underline text-sm font-bold text-ink-soft hover:text-ink transition-colors">
-            看全部资讯 →
-          </Link>
-        </div>
       </RevealItem>
 
       <ol className="space-y-2.5">

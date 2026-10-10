@@ -3,6 +3,7 @@ import { LensLogo } from '@/components/lens-logo';
 
 const FOOTER_NAV = [
   { href: '/news', label: 'AI 资讯' },
+  { href: '/daily', label: 'AI 日报' },
   { href: '/teardowns', label: '产品拆解' },
   { href: '/timeline', label: '模型追踪' },
   { href: '/insights', label: '洞察专栏' },

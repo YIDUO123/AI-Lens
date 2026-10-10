@@ -71,6 +71,17 @@ function dedupe(items: DigestItem[]): { kept: DigestItem[]; removed: number } {
   return { kept, removed };
 }
 
+/** 标题相似度去重(通用版,供日报归档等复用)· 输入需已按重要度降序 */
+export function dedupeByTitle<T extends { title: string }>(items: T[]): { kept: T[]; removed: number } {
+  const kept: T[] = [];
+  let removed = 0;
+  for (const it of items) {
+    if (kept.some((k) => similar(k.title, it.title))) { removed++; continue; }
+    kept.push(it);
+  }
+  return { kept, removed };
+}
+
 // ---- 反馈画像 · "越用越准" ----
 // 读用户对各 category / source 的净票(👍+1 / 👎-1),用于给候选调整排序分。
 type FeedbackProfile = { cat: Map<string, number>; src: Map<string, number> };
