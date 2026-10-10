@@ -13,6 +13,8 @@ import {
   getPublishedArticles,
   getFamilyCounts,
 } from '@/lib/db/queries';
+import { buildDailyDigest } from '@/lib/fetchers/daily-digest';
+import { getNewsCards } from '@/lib/ai/news-card';
 import { LiveNewsFeed } from '@/components/home/live-news-feed';
 import { NewsletterForm } from '@/components/newsletter-form';
 
@@ -99,6 +101,13 @@ export default function HomePage() {
       <section className="container">
         <Suspense fallback={<StatsSkeleton />}>
           <StatsStrip />
+        </Suspense>
+      </section>
+
+      {/* 今日必读 · 回访用户直达内容,不用再跳 /news */}
+      <section className="container mt-14 md:mt-16">
+        <Suspense fallback={<TodayDigestSkeleton />}>
+          <TodayDigest />
         </Suspense>
       </section>
 
@@ -242,6 +251,80 @@ function ModuleCard({ num, icon, title, desc, href, cta, iconBg }: {
         </div>
       </div>
     </Link>
+  );
+}
+
+// ============================================================
+// 今日必读 · Top 5(与每日精编同一选取逻辑,首页直出)
+// ============================================================
+const HOME_CAT_LABEL: Record<string, string> = {
+  'ai-models': '模型', 'ai-products': '产品', industry: '行业', paper: '论文', tip: '技巧',
+};
+
+async function TodayDigest() {
+  const digest = await buildDailyDigest(null, 5, 24, null);
+  if (digest.items.length === 0) return null;
+  const cards = await getNewsCards(digest.items.map((i) => i.id));
+
+  return (
+    <RevealGroup>
+      <RevealItem>
+        <div className="flex items-end justify-between flex-wrap gap-2 pb-3.5 mb-5 border-b-2 border-dashed border-line">
+          <div>
+            <div className="text-[10px] font-black tracking-[2px] uppercase text-coral mb-1">Today&apos;s must-read · 今日必读</div>
+            <h2 className="text-2xl md:text-3xl font-black tracking-[-0.02em]">过去 24 小时,最值得看的 <em className="accent">5 条</em></h2>
+          </div>
+          <Link href="/news" className="link-underline text-sm font-bold text-ink-soft hover:text-ink transition-colors">
+            看全部资讯 →
+          </Link>
+        </div>
+      </RevealItem>
+
+      <ol className="space-y-2.5">
+        {digest.items.map((it, i) => {
+          const card = cards.get(it.id);
+          return (
+            <RevealItem key={it.id}>
+              <li>
+                <Link
+                  href={`/news/card/${it.id}`}
+                  className="group press flex items-start gap-3.5 bg-cream border-2 border-ink rounded-xl px-4 py-3.5 shadow-brutal-sm hover:-translate-y-0.5 hover:shadow-brutal transition-all"
+                >
+                  <span className={`flex-shrink-0 w-7 h-7 grid place-items-center rounded-lg border-2 border-ink font-serif font-black text-sm ${
+                    i === 0 ? 'bg-coral text-white' : 'bg-bg-alt text-ink'
+                  }`}>
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">{HOME_CAT_LABEL[it.category || ''] || '资讯'}</span>
+                      <span className="text-[10px] text-muted-foreground truncate">{it.source}</span>
+                    </span>
+                    <span className="block text-[15px] font-bold leading-snug text-ink group-hover:text-coral transition-colors line-clamp-1">
+                      {it.title}
+                    </span>
+                    <span className="block text-[12.5px] text-ink-soft leading-relaxed line-clamp-1 mt-0.5">
+                      {card?.tldr || it.summary || ''}
+                    </span>
+                  </span>
+                  <ArrowRight className="flex-shrink-0 w-4 h-4 text-muted-foreground group-hover:text-coral group-hover:translate-x-0.5 transition-all mt-1" />
+                </Link>
+              </li>
+            </RevealItem>
+          );
+        })}
+      </ol>
+    </RevealGroup>
+  );
+}
+
+function TodayDigestSkeleton() {
+  return (
+    <div className="space-y-2.5">
+      <div className="h-16 bg-cream border-2 border-ink/10 rounded-xl animate-pulse" />
+      <div className="h-16 bg-cream border-2 border-ink/10 rounded-xl animate-pulse" />
+      <div className="h-16 bg-cream border-2 border-ink/10 rounded-xl animate-pulse" />
+    </div>
   );
 }
 

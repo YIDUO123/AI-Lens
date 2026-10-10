@@ -7,6 +7,8 @@ const FOOTER_NAV = [
   { href: '/timeline', label: '模型追踪' },
   { href: '/insights', label: '洞察专栏' },
   { href: '/about', label: '关于' },
+  { href: '/agent', label: 'Agent 接入' },
+  { href: '/changelog', label: '更新日志' },
 ];
 
 export function Footer() {

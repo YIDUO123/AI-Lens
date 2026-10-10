@@ -93,6 +93,8 @@ export default async function RootLayout({
   return (
     <html lang="zh-CN">
       <head>
+        {/* RSS 自动发现(阅读器/Agent 探测) */}
+        <link rel="alternate" type="application/rss+xml" title="AI Lens · AI 资讯流" href="/rss.xml" />
         {/* JSON-LD 结构化数据 · 组织信息(帮助 Google Knowledge Graph + AI 搜索理解你是谁)*/}
         <script
           type="application/ld+json"

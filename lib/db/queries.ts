@@ -413,20 +413,50 @@ export async function getComments(targetType: TargetType, targetId: string) {
 // ============================================================
 
 /**
- * 简易全站搜索:大小写不敏感的模糊匹配
+ * 简易全站搜索:大小写不敏感的模糊匹配 + 三级扩展
  * 覆盖 articles / teardowns / daily_picks / news_items
+ *
+ * 短 query 治理(埋点:未命中 100% 集中在 ≤6 字):
+ *   1. 精确短语匹配(原行为)
+ *   2. 失败 → 分词 OR(长 query 整句匹配失败时逐词找)
+ *   3. 仍失败 → 同义词/缩写扩展("ai" → agent/openai/claude/gemini…)
+ * 返回 expandedFrom 让前端展示"已为你扩展"
  */
-export async function searchAll(query: string) {
-  const q = query.trim();
-  if (!q) return { articles: [], teardowns: [], daily_picks: [], news_items: [], total: 0 };
+type SearchResult = {
+  articles: any[]; teardowns: any[]; daily_picks: any[]; news_items: any[];
+  total: number; expandedFrom?: string;
+};
 
-  const pattern = `%${q}%`;
+// 常见缩写/泛词 → 具体词扩展(只收高频泛词,保持可维护)
+const SYNONYMS: Record<string, string[]> = {
+  'ai': ['agent', 'openai', 'claude', 'gemini', 'model'],
+  'llm': ['gpt', 'claude', 'gemini', 'model'],
+  '大模型': ['gpt', 'claude', 'gemini', 'model'],
+  '智能体': ['agent', 'agents'],
+  'agent': ['agents', '智能体'],
+  'rag': ['检索', 'llm', '知识库'],
+  'mcp': ['agent', 'tool', '协议'],
+  'coding': ['codex', 'cursor', '编码'],
+  '编码': ['codex', 'cursor', 'coding'],
+  '开源': ['open source', 'openai', '权重'],
+  '价格': ['定价', 'pricing', '成本'],
+  '定价': ['价格', 'pricing'],
+  '融资': ['funding', '估值', '融资'],
+};
+
+/** 用一组 pattern(OR)跑一次四表查询 */
+async function runSearch(patterns: string[]) {
+  const orFor = (cols: any[], patterns: string[]) => {
+    const conds = cols.map((c) => patterns.map((p) => sql`${c} ILIKE ${'%' + p + '%'}`)).flat();
+    return sql.join(conds, sql` OR `);
+  };
+  const ps = patterns;
   const [articleRows, teardownRows, pickRows, newsRows] = await Promise.all([
     db.select({
       id: articles.id, slug: articles.slug, title: articles.title,
       excerpt: articles.excerpt, category: articles.category, publishedAt: articles.publishedAt,
     }).from(articles)
-      .where(sql`${articles.title} ILIKE ${pattern} OR ${articles.excerpt} ILIKE ${pattern} OR ${articles.body} ILIKE ${pattern}`)
+      .where(orFor([articles.title, articles.excerpt, articles.body], ps))
       .orderBy(desc(articles.publishedAt))
       .limit(20),
 
@@ -434,7 +464,7 @@ export async function searchAll(query: string) {
       id: teardowns.id, slug: teardowns.slug, title: teardowns.title,
       positioning: teardowns.positioning, category: teardowns.category, publishedAt: teardowns.publishedAt,
     }).from(teardowns)
-      .where(sql`${teardowns.title} ILIKE ${pattern} OR ${teardowns.positioning} ILIKE ${pattern} OR ${teardowns.body} ILIKE ${pattern}`)
+      .where(orFor([teardowns.title, teardowns.positioning, teardowns.body], ps))
       .orderBy(desc(teardowns.publishedAt))
       .limit(20),
 
@@ -443,7 +473,7 @@ export async function searchAll(query: string) {
       tagline: dailyPicks.tagline, url: dailyPicks.url, category: dailyPicks.category,
       logo: dailyPicks.logo, logoColor: dailyPicks.logoColor,
     }).from(dailyPicks)
-      .where(sql`${dailyPicks.name} ILIKE ${pattern} OR ${dailyPicks.tagline} ILIKE ${pattern} OR ${dailyPicks.positioning} ILIKE ${pattern} OR ${dailyPicks.editorTake} ILIKE ${pattern}`)
+      .where(orFor([dailyPicks.name, dailyPicks.tagline, dailyPicks.positioning, dailyPicks.editorTake], ps))
       .orderBy(desc(dailyPicks.pickedAt))
       .limit(20),
 
@@ -451,16 +481,48 @@ export async function searchAll(query: string) {
       id: newsItems.id, title: newsItems.title, url: newsItems.url,
       source: newsItems.source, publishedAt: newsItems.publishedAt, category: newsItems.category,
     }).from(newsItems)
-      .where(sql`${newsItems.title} ILIKE ${pattern} OR ${newsItems.summary} ILIKE ${pattern}`)
+      .where(orFor([newsItems.title, newsItems.summary], ps))
       .orderBy(desc(newsItems.publishedAt))
       .limit(30),
   ]);
-
   return {
-    articles: articleRows,
-    teardowns: teardownRows,
-    daily_picks: pickRows,
-    news_items: newsRows,
+    articles: articleRows, teardowns: teardownRows, daily_picks: pickRows, news_items: newsRows,
     total: articleRows.length + teardownRows.length + pickRows.length + newsRows.length,
   };
+}
+
+/** 按 id 去重合并两批结果(首批优先) */
+function mergeResults(base: any[], extra: any[]) {
+  const seen = new Set(base.map((r) => r.id));
+  return [...base, ...extra.filter((r) => !seen.has(r.id))];
+}
+
+export async function searchAll(query: string): Promise<SearchResult> {
+  const q = query.trim();
+  if (!q) return { articles: [], teardowns: [], daily_picks: [], news_items: [], total: 0 };
+
+  // 1) 精确短语
+  let r = await runSearch([q]);
+  let expandedFrom: string | undefined;
+
+  // 2) 分词 OR(含空格/多词的 query,整句失败时逐词找)
+  if (r.total === 0 && /\s+/.test(q)) {
+    const tokens = q.split(/\s+/).filter((t) => t.length >= 2);
+    if (tokens.length > 1) {
+      r = await runSearch(tokens);
+      if (r.total > 0) expandedFrom = tokens.join(' / ');
+    }
+  }
+
+  // 3) 同义词扩展(短泛词)
+  if (r.total === 0) {
+    const lower = q.toLowerCase();
+    const syn = SYNONYMS[lower] || SYNONYMS[q];
+    if (syn?.length) {
+      r = await runSearch(syn);
+      if (r.total > 0) expandedFrom = syn.slice(0, 3).join(' / ');
+    }
+  }
+
+  return { ...r, expandedFrom };
 }

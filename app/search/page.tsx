@@ -48,6 +48,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         {q && results && (
           <div className="mt-3 text-sm text-muted-foreground">
             找到 <b className="text-coral font-serif text-base font-black">{results.total}</b> 条结果 · 搜"<span className="text-ink font-semibold">{q}</span>"
+            {results.expandedFrom && (
+              <span className="ml-2 text-coral font-semibold">· 已扩展为"{results.expandedFrom}"</span>
+            )}
           </div>
         )}
       </div>

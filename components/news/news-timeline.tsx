@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth';
 import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
 import { FileSearch, ArrowUpRight } from 'lucide-react';
 import { DeepAnalysis } from '@/components/digest/deep-analysis';
+import { ReadMarker, ClearReadButton } from '@/components/news/read-marker';
 
 const PM_RULES = [
   { kw: ['agent', 'agents', '智能体', 'browser use', 'computer use'], insight: 'Agent 是当下最卷的赛道。核心问题:通用能力和垂直场景的平衡。' },
@@ -73,6 +74,19 @@ function cleanSource(s: string | null): string {
   return s.replace(/\s*(?:（RSS）|\(RSS\))/g, '').replace(/^X[::]\s*/, '𝕏 ').trim();
 }
 
+/** 入选理由 · 确定性规则生成(为什么这条排在前面) */
+function pickReason(it: { score?: number; category?: string | null; title: string }): string {
+  const text = it.title.toLowerCase();
+  if ((it.score || 0) >= 80) return '今日高分信号 · 多项指标靠前';
+  if (it.category === 'ai-models' && /(发布|launch|release|上线|开源|announce)/i.test(text)) return '模型/产品发布动态';
+  if (/(agent|智能体)/i.test(text)) return 'Agent 赛道持续高热';
+  if (/(开源|open source)/i.test(text)) return '开源生态值得关注的动作';
+  if (/(融资|funding|估值|raising)/i.test(text)) return '资本动向 · 反映赛道判断';
+  if (it.category === 'paper') return '论文研究 · 技术前瞻';
+  if (it.category === 'tip') return '实操技巧 · 即学即用';
+  return '综合评分入选';
+}
+
 export async function NewsTimeline({ activeCat }: { activeCat: string }) {
   // 按分类去 DB 拿 · 每类都能拿到该类的最新 50 条 · 不再客户端 filter 到几乎为空
   const filtered = await getLatestNewsByCategory(activeCat as any, 50);
@@ -123,6 +137,7 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                     key={it.id}
                     className="bg-cream border-2 border-ink rounded-xl px-5 py-4 grid grid-cols-[56px_1fr_auto] gap-4 items-start shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal transition"
                   >
+                    <ReadMarker newsId={it.id} />
                     <div className="font-mono text-sm font-bold text-coral tracking-tight">{fmtTime(it.publishedAt)}</div>
 
                     <div className="min-w-0">
@@ -132,6 +147,10 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                       {it.summary && (
                         <p className="text-sm text-ink-soft leading-relaxed mb-2 line-clamp-2">{it.summary}</p>
                       )}
+                      <div className="flex items-center gap-1.5 mb-2 text-[11px] text-muted-foreground">
+                        <span className="inline-block h-1 w-1 rounded-full bg-gold" />
+                        入选:{pickReason(it)}
+                      </div>
                       <div className="flex items-center gap-2.5 flex-wrap text-xs text-muted-foreground">
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cat.bg}`}>{cat.label}</span>
                         <span className="font-semibold">· {cleanSource(it.source)}</span>
@@ -196,7 +215,12 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
       })}
 
       <div className="mt-8 pt-6 border-t border-dashed border-line text-center text-sm text-muted-foreground">
-        以上显示 <b className="text-ink">{filtered.length}</b> 条最新资讯 · 更早内容请用顶部 🔍 <a href="/search" className="text-coral font-bold underline">搜索</a>
+        <div>
+          以上显示 <b className="text-ink">{filtered.length}</b> 条最新资讯 · 更早内容请用顶部 🔍 <a href="/search" className="text-coral font-bold underline">搜索</a>
+        </div>
+        <div className="mt-2.5 flex justify-center">
+          <ClearReadButton />
+        </div>
       </div>
     </div>
   );
