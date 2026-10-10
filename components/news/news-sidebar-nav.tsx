@@ -42,30 +42,6 @@ export function NewsSidebarClient({
 
   return (
     <div className="space-y-8">
-      {/* 动态模块 · 横向 chips(跨页/页内切换,与竖排分类视觉区分) */}
-      <div className="hidden lg:block">
-        <div className="mb-2.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-          动态模块
-          <span className="flex-1 h-px bg-line" />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { href: '#report-container', icon: '📅', label: '报告 · 速览' },
-            { href: '#timeline', icon: '🕐', label: 'AI 资讯流' },
-            { href: '/topics', icon: '🏷️', label: '主题聚合' },
-            { href: '/hot', icon: '🔥', label: '热点榜' },
-          ].map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border-2 border-ink bg-bg-alt text-xs font-bold text-ink shadow-[2px_2px_0_rgba(26,26,26,0.15)] hover:-translate-y-0.5 hover:shadow-brutal-sm hover:bg-cream transition whitespace-nowrap"
-            >
-              <span>{l.icon}</span> {l.label}
-            </Link>
-          ))}
-        </div>
-      </div>
-
       {/* 资讯分类 · 桌面竖排 / 移动端横向滑动 chips */}
       <div>
         <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">

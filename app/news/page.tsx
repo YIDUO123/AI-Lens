@@ -45,7 +45,30 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           <p className="text-xs text-muted-foreground mb-6">
             邮箱 / 微信 / 飞书 每天定时推送 10 条精选 · 可选模块与模型 · 一键退订
           </p>
-          <div className="flex flex-wrap items-center gap-3 md:justify-end">
+          {/* 底行:左 = 动态模块 chips(页内/跨模块切换) · 右 = 订阅 */}
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                动态模块
+                <span className="w-16 h-px bg-line" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { href: '#report-container', icon: '📅', label: '报告 · 速览' },
+                  { href: '#timeline', icon: '🕐', label: 'AI 资讯流' },
+                  { href: '/topics', icon: '🏷️', label: '主题聚合' },
+                  { href: '/hot', icon: '🔥', label: '热点榜' },
+                ].map((l) => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border-2 border-ink bg-bg-alt text-xs font-bold text-ink shadow-[2px_2px_0_rgba(26,26,26,0.15)] hover:-translate-y-0.5 hover:shadow-brutal-sm hover:bg-cream transition whitespace-nowrap"
+                  >
+                    <span>{l.icon}</span> {l.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
             <Link
               href="/me"
               className="press inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-coral to-gold text-white border-2 border-ink rounded-xl text-base font-black tracking-wide shadow-brutal hover:-translate-y-0.5 hover:shadow-brutal-lg transition-all"
