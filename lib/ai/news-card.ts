@@ -7,7 +7,7 @@
  * 缓存策略:一条资讯生成一次,写入 news_cards,全体用户共享。
  * 只对「当天会被推送/展示的 Top 资讯」加工,不全量跑,省 AI 调用。
  */
-import { db, newsItems, newsCards } from '@/db';
+import { db, newsItems, newsCards, siteSettings } from '@/db';
 import { eq, inArray } from 'drizzle-orm';
 import { generateWithAI } from '@/lib/ai/gemini';
 import type { NewsCardDims, NewsItem } from '@/db';
@@ -128,10 +128,14 @@ export async function getNewsCards(ids: string[]) {
   return new Map(rows.map((r) => [r.id, { tldr: r.tldr, dims: r.dims }]));
 }
 
-/** 读单条卡片 */
+/** 读单条卡片(schema 漂移时降级为 null,不让页面 500) */
 export async function getNewsCard(id: string) {
-  const [row] = await db.select().from(newsCards).where(eq(newsCards.id, id)).limit(1);
-  return row ? { tldr: row.tldr, dims: row.dims } : null;
+  try {
+    const [row] = await db.select().from(newsCards).where(eq(newsCards.id, id)).limit(1);
+    return row ? { tldr: row.tldr, dims: row.dims } : null;
+  } catch {
+    return null;
+  }
 }
 
 // ============================================================
@@ -190,19 +194,19 @@ export async function generateDeepAnalysis(
 
 /**
  * 读一条资讯的深度解析缓存
+ * 存 site_settings(键值表 · 零迁移):key = deep_analysis:{newsId},value = markdown
  */
 export async function getDeepAnalysis(id: string): Promise<string | null> {
   const [row] = await db
-    .select({ deepAnalysis: newsCards.deepAnalysis })
-    .from(newsCards)
-    .where(eq(newsCards.id, id))
+    .select({ value: siteSettings.value })
+    .from(siteSettings)
+    .where(eq(siteSettings.key, `deep_analysis:${id}`))
     .limit(1);
-  return row?.deepAnalysis || null;
+  return row?.value || null;
 }
 
 /**
  * 生成并落库深度解析(与六维卡共用一行;六维不存在时同步生成,避免二次 AI 调用)
- * 返回 { markdown, sixDimFresh }:sixDimFresh 表示这次调用是否顺带补齐了六维
  */
 export async function ensureDeepAnalysis(
   id: string,
@@ -215,11 +219,22 @@ export async function ensureDeepAnalysis(
     .limit(1);
   if (!item) return { error: '资讯不存在' };
 
-  const [row] = await db.select().from(newsCards).where(eq(newsCards.id, id)).limit(1);
-  const haveDeep = !!row?.deepAnalysis;
-  const haveSixDim = !!row;
+  const haveDeep = await getDeepAnalysis(id);
+  if (haveDeep) return { markdown: haveDeep };
 
-  if (haveDeep) return { markdown: row!.deepAnalysis! };
+  // 六维卡不存在时顺带生成(一次调用补齐两块,避免用户再点一次等 20 秒)
+  try {
+    const [cardRow] = await db.select({ id: newsCards.id }).from(newsCards).where(eq(newsCards.id, id)).limit(1);
+    if (!cardRow) {
+      const card = await generateNewsCard(item);
+      await db
+        .insert(newsCards)
+        .values({ id, tldr: card.tldr, dims: card.dims, genModel: 'auto' })
+        .onConflictDoNothing();
+    }
+  } catch {
+    // 六维补齐失败不阻塞深度解析
+  }
 
   // 生成深度解析
   let markdown: string;
@@ -230,23 +245,12 @@ export async function ensureDeepAnalysis(
   }
   if (!markdown || markdown.length < 100) return { error: 'AI 返回内容过短,请重试' };
 
-  // 落库:已有六维行 → 只补 deep 列;没有 → 顺带生成六维(一次 AI 调用补齐两块)
+  // 落库(site_settings 键值 upsert · 零迁移)
   try {
-    if (haveSixDim) {
-      await db
-        .update(newsCards)
-        .set({ deepAnalysis: markdown, deepAnalysisModel: 'auto', deepAnalysisAt: new Date() })
-        .where(eq(newsCards.id, id));
-    } else {
-      const card = await generateNewsCard(item);
-      await db
-        .insert(newsCards)
-        .values({ id, tldr: card.tldr, dims: card.dims, genModel: 'auto', deepAnalysis: markdown, deepAnalysisModel: 'auto', deepAnalysisAt: new Date() })
-        .onConflictDoUpdate({
-          target: newsCards.id,
-          set: { deepAnalysis: markdown, deepAnalysisModel: 'auto', deepAnalysisAt: new Date() },
-        });
-    }
+    await db
+      .insert(siteSettings)
+      .values({ key: `deep_analysis:${id}`, value: markdown })
+      .onConflictDoUpdate({ target: siteSettings.key, set: { value: markdown, updatedAt: new Date() } });
   } catch {
     // 落库失败不阻塞返回(下次会重新生成,可接受)
   }

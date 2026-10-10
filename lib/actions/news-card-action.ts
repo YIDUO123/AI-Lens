@@ -21,9 +21,6 @@ export async function loadNewsCard(id: string): Promise<{ tldr: string; dims: Ne
 }
 
 // ---- AI 深度解析 · 简易限流(内存窗口)----
-// serverless 实例重启即清零,可接受:缓存共享 + 生成一次全站可用,滥用面本来就小
-// - 单条资讯:每小时 6 次生成尝试(防同一篇反复打 AI,如生成失败重试场景)
-// - 全局:每小时 30 次生成(防批量脚本扫全站触发海量生成)
 const RATE_LIMIT_ITEM = 6;
 const RATE_LIMIT_GLOBAL = 30;
 const RATE_WINDOW_MS = 60 * 60 * 1000;
