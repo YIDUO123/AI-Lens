@@ -9,6 +9,7 @@ import { headers } from 'next/headers';
 import { NewsFeedback } from '@/components/digest/news-feedback';
 import { NewsDims } from '@/components/digest/news-dims';
 import { CardBody } from '@/components/digest/card-body';
+import { DeepAnalysis } from '@/components/digest/deep-analysis';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -49,6 +50,9 @@ export default async function NewsCardPage({ params }: { params: Promise<{ id: s
 
         {/* 六维:缓存命中 server 渲染;否则客户端异步生成(首屏不阻塞) */}
         {card ? <NewsDims tldr={card.tldr} dims={card.dims} /> : <CardBody newsId={id} fallbackSummary={item.summary} />}
+
+        {/* AI 深度解析 · 按需生成,一次生成全站共享 */}
+        <DeepAnalysis newsId={id} />
 
         {/* 操作区:原文 + 反馈 */}
         <div className="mt-8 pt-6 border-t border-dashed border-line flex flex-wrap items-center gap-3">

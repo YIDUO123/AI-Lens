@@ -6,6 +6,7 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
 import { FileSearch, ArrowUpRight } from 'lucide-react';
+import { DeepAnalysis } from '@/components/digest/deep-analysis';
 
 const PM_RULES = [
   { kw: ['agent', 'agents', '智能体', 'browser use', 'computer use'], insight: 'Agent 是当下最卷的赛道。核心问题:通用能力和垂直场景的平衡。' },
@@ -138,6 +139,7 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                           <FileSearch className="w-3 h-3" />
                           六维拆解
                         </a>
+                        <DeepAnalysis newsId={it.id} variant="button" />
                         {it.url && (
                           <a href={it.url} target="_blank" rel="noopener noreferrer" className="press inline-flex items-center gap-0.5 px-2.5 py-1 bg-white border-[1.5px] border-line rounded-md text-[11px] font-bold text-ink-soft hover:border-ink hover:text-ink transition-colors">
                             原文

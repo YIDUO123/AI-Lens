@@ -62,19 +62,27 @@ export async function GET(req: NextRequest) {
   // 取所有活跃订阅者
   const all = await db.select().from(newsletterSubscribers).where(eq(newsletterSubscribers.active, true));
 
-  // 筛选「本小时该发且今天没发」· 测试模式只发指定邮箱
+  // 筛选「今天该发且今天还没发」· 测试模式只发指定邮箱
+  // 窗口匹配:当前小时 >= 用户设定小时即发(GitHub Actions 定时任务会跳点/延迟,
+  // 精确相等会导致错过那一小时就整天收不到;改成"到达设定时刻后的第一次成功执行")
+  let statNotDaily = 0, statWaiting = 0, statAlreadySent = 0;
   const due = all.filter((s) => {
     if (testMode) return testEmail ? s.email === testEmail : true;
     const prefs = s.preferences;
     // 只推「显式选了每日精编」的订阅者 · 老的周报订阅者(preferences=null)不动
-    if (!prefs || prefs.frequency !== 'daily') return false;
+    if (!prefs || prefs.frequency !== 'daily') { statNotDaily++; return false; }
     const sendHour = parseInt((prefs.sendTime || '09:00').split(':')[0], 10) || 9;
-    if (sendHour !== hour) return false;
-    return !sentToday(s, dateStr);
+    if (hour < sendHour) { statWaiting++; return false; }
+    if (sentToday(s, dateStr)) { statAlreadySent++; return false; }
+    return true;
   });
 
   if (due.length === 0) {
-    return NextResponse.json({ ok: true, message: '本小时无人需要推送', stats: { hour, total: all.length } });
+    return NextResponse.json({
+      ok: true,
+      message: '本小时无人需要推送',
+      stats: { hour, total: all.length, notDaily: statNotDaily, waitingForSendHour: statWaiting, alreadySent: statAlreadySent },
+    });
   }
 
   // 为每人算 digest(小规模逐个;后续可按偏好去重合并)

@@ -180,6 +180,10 @@ export const newsCards = pgTable('news_cards', {
   // 哪个 AI 通道生成的 · 便于排查
   genModel: text('gen_model'),
   generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow(),
+  // AI 深度解析(长文 markdown)· 用户点"AI 解析"按需生成,生成一次全站共享
+  deepAnalysis: text('deep_analysis'),
+  deepAnalysisModel: text('deep_analysis_model'),
+  deepAnalysisAt: timestamp('deep_analysis_at', { withTimezone: true }),
 });
 
 export type NewsCard = typeof newsCards.$inferSelect;
