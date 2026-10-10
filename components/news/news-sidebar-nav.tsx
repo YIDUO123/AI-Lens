@@ -43,19 +43,25 @@ export function NewsSidebarClient({
 
   /**
    * 滚动策略:
-   * - 视野已在"AI 资讯流"(#timeline)区域内 → 原地切换,不动
+   * - 视野已在"AI 资讯流"(#timeline)区域内 → 原地切换,并强制恢复原滚动位置
    * - 视野不在(页头/报告区等) → 切换后平滑滚到"AI 资讯流"
+   * router.replace(scroll:false) 之外再加显式恢复,双保险防跳顶
    */
   const go = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
     const el = document.getElementById('timeline');
     const rect = el?.getBoundingClientRect();
-    const inView = !!rect && rect.top < window.innerHeight && rect.bottom > 0;
+    const inView = !!rect && rect.top < window.innerHeight - 96 && rect.bottom > 96;
+    const y = window.scrollY;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     router.replace(href, { scroll: false });
-    if (!inView && el) {
-      setTimeout(() => el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }), 180);
-    }
+    setTimeout(() => {
+      if (inView) {
+        if (Math.abs(window.scrollY - y) > 2) window.scrollTo({ top: y, behavior: 'auto' });
+      } else if (el) {
+        el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      }
+    }, 220);
   };
 
   return (
