@@ -2,8 +2,8 @@
 
 /**
  * 已读标记 · 时间线卡片
- * - 挂载时读 localStorage(ailens-read-v1);已读 → 整卡淡化
- * - 未读卡在视口停留 2.5s → 记为已读
+ * - 点击卡片(任意链接:标题/六维/原文/AI 解析)才记为已读
+ * - 已读卡整体淡化;localStorage 持久化(ailens-read-v1)
  * - 配套 ClearReadButton 放在时间线尾部
  */
 import { useEffect, useRef, useState } from 'react';
@@ -34,33 +34,23 @@ export function ReadMarker({ newsId }: { newsId: string }) {
 
   useEffect(() => {
     const read = loadReadSet();
-    const el = ref.current?.closest('article');
+    const el = ref.current?.closest('article') as HTMLElement | null;
 
     if (read.has(newsId)) {
       setIsRead(true);
-      if (el) (el as HTMLElement).dataset.read = '1';
       return;
     }
 
-    // 视口内停留 2.5s → 标已读
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const io = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting && !timer) {
-        timer = setTimeout(() => {
-          const s = loadReadSet();
-          s.add(newsId);
-          persistReadSet(s);
-          setIsRead(true);
-          if (el) (el as HTMLElement).dataset.read = '1';
-          io.disconnect();
-        }, 2500);
-      } else if (!e.isIntersecting && timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    }, { threshold: 0.5 });
-    if (el) io.observe(el);
-    return () => { io.disconnect(); if (timer) clearTimeout(timer); };
+    // 点击卡片内任意元素(链接/按钮)→ 记已读
+    const onClick = () => {
+      const s = loadReadSet();
+      if (s.has(newsId)) return;
+      s.add(newsId);
+      persistReadSet(s);
+      setIsRead(true);
+    };
+    el?.addEventListener('click', onClick, { capture: true });
+    return () => el?.removeEventListener('click', onClick, { capture: true } as EventListenerOptions);
   }, [newsId]);
 
   // 已读 → 卡片淡化为次级观感(保留可读性)
@@ -90,6 +80,7 @@ export function ClearReadButton() {
           (el as HTMLElement).style.opacity = '1';
           delete (el as HTMLElement).dataset.read;
         });
+        window.location.reload();
       }}
       className="press inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-coral transition-colors"
       title="清除已读记录"

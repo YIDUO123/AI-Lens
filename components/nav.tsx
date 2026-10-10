@@ -7,7 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { UserMenu } from '@/components/auth/user-menu';
 import { LensLogo } from '@/components/lens-logo';
-import { Search, Trophy, Menu, X } from 'lucide-react';
+import { Search, Trophy, Menu, X, Bot } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/', label: '首页' },
@@ -100,6 +100,18 @@ export function Nav() {
               )}
             >
               <Trophy className="w-4 h-4" />
+            </Link>
+
+            {/* Agent 接入 */}
+            <Link
+              href="/agent"
+              aria-label="Agent 接入"
+              className={cn(
+                'p-2 rounded-full border-2 border-line hover:border-ink hover:bg-bg-alt transition',
+                pathname === '/agent' && 'border-coral text-coral',
+              )}
+            >
+              <Bot className="w-4 h-4" />
             </Link>
 
             {/* 搜索图标 */}

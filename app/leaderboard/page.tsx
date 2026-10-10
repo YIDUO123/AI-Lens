@@ -1,12 +1,12 @@
 /**
  * /leaderboard · 内容排行榜
- * 3 榜合一:热门(likes+saves 加权)· 阅读(views)· 讨论(comments)
- * 跨类型统计:articles + teardowns + dailyPicks
+ * 4 榜合一:热门(likes+saves 加权)· 阅读(views)· 讨论(comments)· 资讯(互动+编辑评分)
+ * 跨类型统计:articles + teardowns + dailyPicks + newsItems
  */
 import Link from 'next/link';
-import { db, articles, teardowns, dailyPicks, likes, saves, comments } from '@/db';
+import { db, articles, teardowns, dailyPicks, newsItems, likes, saves, comments } from '@/db';
 import { desc, eq, and, sql, inArray } from 'drizzle-orm';
-import { Flame, Eye, MessageCircle, TrendingUp } from 'lucide-react';
+import { Flame, Eye, MessageCircle, Newspaper } from 'lucide-react';
 import { Reveal } from '@/components/motion/reveal';
 
 export const runtime = 'nodejs'; // EdgeOne 需要显式声明 · 否则可能跑 Edge runtime 而 postgres-js 不兼容
@@ -15,7 +15,7 @@ export const revalidate = 3600; // 每小时刷一次
 
 type Row = {
   id: string;
-  targetType: 'article' | 'teardown' | 'daily_pick';
+  targetType: 'article' | 'teardown' | 'daily_pick' | 'news_item';
   title: string;
   href: string;
   emoji: string;
@@ -23,18 +23,20 @@ type Row = {
   saves: number;
   views: number;
   comments: number;
-  score: number; // 综合分:likes*3 + saves*5 + comments*4 + views*0.1
+  score: number; // 综合分:likes*3 + saves*5 + comments*4 + views*0.1(资讯:score*0.5 替代 views)
 };
 
 async function loadLeaderboard(): Promise<Row[]> {
-  // 一次拉全量已发布的三种内容
-  const [aList, tList, pList] = await Promise.all([
+  // 一次拉全量已发布的内容
+  const [aList, tList, pList, nList] = await Promise.all([
     db.select({ id: articles.id, title: articles.title, slug: articles.slug, viewCount: articles.viewCount })
       .from(articles).where(eq(articles.isDraft, false)).limit(500),
     db.select({ id: teardowns.id, title: teardowns.title, slug: teardowns.slug, viewCount: teardowns.viewCount })
       .from(teardowns).limit(500),
     db.select({ id: dailyPicks.id, title: dailyPicks.name })
       .from(dailyPicks).where(eq(dailyPicks.isDraft, false)).limit(500),
+    db.select({ id: newsItems.id, title: newsItems.title, score: newsItems.score })
+      .from(newsItems).limit(2000),
   ]);
 
   // 聚合 likes / saves / comments · 按 targetType+targetId 分组
@@ -47,15 +49,15 @@ async function loadLeaderboard(): Promise<Row[]> {
     return new Map(rows.map((r: any) => [r.targetId, r.n]));
   };
 
-  const [likeA, likeT, likeP, saveA, saveT, saveP, cmtA, cmtT, cmtP] = await Promise.all([
-    aggregate('article', likes), aggregate('teardown', likes), aggregate('daily_pick', likes),
-    aggregate('article', saves), aggregate('teardown', saves), aggregate('daily_pick', saves),
-    aggregate('article', comments), aggregate('teardown', comments), aggregate('daily_pick', comments),
+  const [likeA, likeT, likeP, likeN, saveA, saveT, saveP, saveN, cmtA, cmtT, cmtP, cmtN] = await Promise.all([
+    aggregate('article', likes), aggregate('teardown', likes), aggregate('daily_pick', likes), aggregate('news_item', likes),
+    aggregate('article', saves), aggregate('teardown', saves), aggregate('daily_pick', saves), aggregate('news_item', saves),
+    aggregate('article', comments), aggregate('teardown', comments), aggregate('daily_pick', comments), aggregate('news_item', comments),
   ]);
 
   const mkRow = (
     id: string,
-    targetType: 'article' | 'teardown' | 'daily_pick',
+    targetType: Row['targetType'],
     title: string,
     href: string,
     emoji: string,
@@ -63,22 +65,24 @@ async function loadLeaderboard(): Promise<Row[]> {
     likeMap: Map<string, number>,
     saveMap: Map<string, number>,
     cmtMap: Map<string, number>,
+    editorScore?: number,
   ): Row => {
     const l = likeMap.get(id) || 0;
     const s = saveMap.get(id) || 0;
     const c = cmtMap.get(id) || 0;
     const v = viewCount || 0;
-    return {
-      id, targetType, title, href, emoji,
-      likes: l, saves: s, views: v, comments: c,
-      score: l * 3 + s * 5 + c * 4 + v * 0.1,
-    };
+    // 资讯没有 viewCount,用编辑评分(0-100)的 0.5 权重替代 views 项,保证新站也有可用的资讯榜
+    const score = targetType === 'news_item'
+      ? (editorScore || 0) * 0.5 + l * 3 + s * 5 + c * 4
+      : l * 3 + s * 5 + c * 4 + v * 0.1;
+    return { id, targetType, title, href, emoji, likes: l, saves: s, views: v, comments: c, score };
   };
 
   const rows: Row[] = [
     ...aList.map((a) => mkRow(a.id, 'article', a.title, `/insights/${a.slug}`, '✍️', a.viewCount || 0, likeA, saveA, cmtA)),
     ...tList.map((t) => mkRow(t.id, 'teardown', t.title, `/teardowns/${t.slug}`, '🔬', t.viewCount || 0, likeT, saveT, cmtT)),
     ...pList.map((p) => mkRow(p.id, 'daily_pick', p.title, `/#daily-picks`, '🌟', 0, likeP, saveP, cmtP)),
+    ...nList.map((n) => mkRow(n.id, 'news_item', n.title, `/news/card/${n.id}`, '📰', 0, likeN, saveN, cmtN, n.score)),
   ];
 
   return rows;
@@ -87,9 +91,10 @@ async function loadLeaderboard(): Promise<Row[]> {
 export default async function LeaderboardPage() {
   const all = await loadLeaderboard();
 
-  const hot     = [...all].sort((a, b) => b.score - a.score).slice(0, 20);
-  const viewed  = [...all].sort((a, b) => b.views - a.views).slice(0, 20).filter((r) => r.views > 0);
-  const talked  = [...all].sort((a, b) => b.comments - a.comments).slice(0, 20).filter((r) => r.comments > 0);
+  const hot     = [...all].filter((r) => r.targetType !== 'news_item').sort((a, b) => b.score - a.score).slice(0, 20);
+  const viewed  = [...all].filter((r) => r.targetType !== 'news_item').sort((a, b) => b.views - a.views).slice(0, 20).filter((r) => r.views > 0);
+  const talked  = [...all].filter((r) => r.targetType !== 'news_item').sort((a, b) => b.comments - a.comments).slice(0, 20).filter((r) => r.comments > 0);
+  const newsHot = [...all].filter((r) => r.targetType === 'news_item').sort((a, b) => b.score - a.score).slice(0, 20);
 
   return (
     <div className="container max-w-5xl py-12 pb-24">
@@ -99,18 +104,21 @@ export default async function LeaderboardPage() {
           什么<em className="accent">最受欢迎</em>
         </h1>
         <p className="text-ink-soft leading-relaxed max-w-2xl">
-          综合 <b>点赞 · 收藏 · 评论 · 阅读</b> 4 项指标 · 跨越洞察长文 · 产品拆解 · 每日精选 3 类内容 · 每小时刷新一次。
+          综合 <b>点赞 · 收藏 · 评论 · 阅读</b> 4 项指标 · 跨越洞察长文 · 产品拆解 · 每日精选 · AI 资讯 4 类内容 · 每小时刷新一次。
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         <Reveal><Board icon={<Flame className="w-4 h-4" />} title="综合最热" tint="text-coral" rows={hot} metric="score" /></Reveal>
-        <Reveal delay={0.1}><Board icon={<Eye className="w-4 h-4" />} title="阅读最多" tint="text-blue-600" rows={viewed} metric="views" /></Reveal>
-        <Reveal delay={0.2}><Board icon={<MessageCircle className="w-4 h-4" />} title="讨论最多" tint="text-teal-600" rows={talked} metric="comments" /></Reveal>
+        <Reveal delay={0.08}><Board icon={<Newspaper className="w-4 h-4" />} title="AI 资讯热榜" tint="text-teal" rows={newsHot} metric="score" /></Reveal>
+        <Reveal delay={0.16}><Board icon={<Eye className="w-4 h-4" />} title="阅读最多" tint="text-blue-600" rows={viewed} metric="views" /></Reveal>
+        <Reveal delay={0.24}><Board icon={<MessageCircle className="w-4 h-4" />} title="讨论最多" tint="text-teal-600" rows={talked} metric="comments" /></Reveal>
       </div>
 
       <p className="mt-10 text-center text-xs text-muted-foreground">
         评分公式:<code className="font-mono">score = likes×3 + saves×5 + comments×4 + views×0.1</code>
+        <span className="mx-1.5">·</span>
+        资讯榜:<code className="font-mono">编辑评分×0.5 替代 views 项</code>
       </p>
     </div>
   );
