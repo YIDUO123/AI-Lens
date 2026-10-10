@@ -6,7 +6,7 @@
  * 无人为延迟、无强制滚动,URL 即状态(可分享/可刷新)
  */
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 type CatKey = 'all' | 'launch' | 'industry' | 'paper' | 'tip';
@@ -31,6 +31,7 @@ export function NewsSidebarClient({
   activeFam: string;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const buildUrl = (cat: CatKey) => {
     const params = new URLSearchParams();
@@ -38,6 +39,23 @@ export function NewsSidebarClient({
     params.set('cat', cat);
     if (activeFam !== 'all') params.set('fam', activeFam);
     return `${pathname}?${params.toString()}`;
+  };
+
+  /**
+   * 滚动策略:
+   * - 视野已在"AI 资讯流"(#timeline)区域内 → 原地切换,不动
+   * - 视野不在(页头/报告区等) → 切换后平滑滚到"AI 资讯流"
+   */
+  const go = (e: React.MouseEvent, href: string) => {
+    e.preventDefault();
+    const el = document.getElementById('timeline');
+    const rect = el?.getBoundingClientRect();
+    const inView = !!rect && rect.top < window.innerHeight && rect.bottom > 0;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    router.replace(href, { scroll: false });
+    if (!inView && el) {
+      setTimeout(() => el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }), 180);
+    }
   };
 
   return (
@@ -58,6 +76,7 @@ export function NewsSidebarClient({
                 <Link
                   href={buildUrl(c.key)}
                   prefetch
+                  onClick={(e) => go(e, buildUrl(c.key))}
                   className={cn(
                     'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-[1.5px] text-[13px] font-semibold whitespace-nowrap transition',
                     isActive ? 'bg-ink text-background border-ink' : 'bg-cream border-line text-ink-soft',
@@ -82,6 +101,7 @@ export function NewsSidebarClient({
                 <Link
                   href={buildUrl(c.key)}
                   prefetch
+                  onClick={(e) => go(e, buildUrl(c.key))}
                   className={cn(
                     'w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition',
                     isActive ? 'bg-ink text-background font-bold' : 'text-ink-soft hover:bg-bg-alt hover:text-ink',
