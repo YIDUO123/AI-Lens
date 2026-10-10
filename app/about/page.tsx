@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Mail, Github } from 'lucide-react';
 import { unstable_cache } from 'next/cache';
 import { db, articles, teardowns, timelineVersions } from '@/db';
@@ -54,9 +55,11 @@ export default async function AboutPage() {
           <div className="bg-cream border-2 border-ink rounded-2xl p-7 shadow-brutal relative overflow-hidden">
             <div className="absolute -top-14 -right-14 w-52 h-52 rounded-full blob-float bg-[radial-gradient(circle,rgba(255,107,53,0.22),transparent_70%)] pointer-events-none" />
             <div className="grid grid-cols-[100px_1fr] gap-5 items-center pb-5 mb-5 border-b border-dashed border-line relative">
-              <img
+              <Image
                 src="/avatar.jpg"
                 alt="Alex"
+                width={96}
+                height={96}
                 className="w-24 h-24 rounded-full object-cover bg-bg-alt"
               />
               <div>

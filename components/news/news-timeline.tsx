@@ -1,14 +1,14 @@
 /**
  * News Timeline · 按日期分组的完整时间线
+ * 全程脱离 session(ISR 可缓存):用户赞/藏状态由 UserInteractionsLoader 客户端补齐
  */
-import { getLatestNews, getLatestNewsByCategory, getInteractionCountsBatch, getUserInteractions } from '@/lib/db/queries';
-import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
+import { getLatestNews, getLatestNewsByCategory, getInteractionCountsBatch } from '@/lib/db/queries';
 import { LikeButton, SaveButton } from '@/components/interactions/reaction-buttons';
 import { FileSearch, ArrowUpRight } from 'lucide-react';
 import { DeepAnalysis } from '@/components/digest/deep-analysis';
 import { ReadMarker, ClearReadButton } from '@/components/news/read-marker';
 import { getOgImages } from '@/lib/fetchers/og-image';
+import { UserInteractionsLoader } from '@/components/interactions/user-interactions-loader';
 
 const PM_RULES = [
   { kw: ['agent', 'agents', '智能体', 'browser use', 'computer use'], insight: 'Agent 是当下最卷的赛道。核心问题:通用能力和垂直场景的平衡。' },
@@ -101,13 +101,10 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
     );
   }
 
-  // 批量查赞/藏 + 用户交互状态(不影响时间排序)
-  const session = await auth.api.getSession({ headers: await headers() });
-  const currentUserId = session?.user?.id || null;
+  // 批量查公共赞/藏数 + 封面图(用户个人状态由 UserInteractionsLoader 客户端补齐)
   const ids = filtered.map((n) => n.id);
-  const [counts, userState, ogImages] = await Promise.all([
+  const [counts, ogImages] = await Promise.all([
     getInteractionCountsBatch('news_item', ids),
-    currentUserId ? getUserInteractions(currentUserId, 'news_item', ids) : Promise.resolve({ likedIds: new Set<string>(), savedIds: new Set<string>() }),
     getOgImages(ids),
   ]);
 
@@ -115,6 +112,7 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
 
   return (
     <div className="mt-6 space-y-10">
+      <UserInteractionsLoader />
       {grouped.map(([dateKey, items]) => {
         const dl = dateLabel(items[0].publishedAt);
         return (
@@ -132,8 +130,6 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                 const isHot = (it.score || 0) >= 75;
                 const likes = counts.likes[it.id] || 0;
                 const saves = counts.saves[it.id] || 0;
-                const liked = userState.likedIds.has(it.id);
-                const saved = userState.savedIds.has(it.id);
                 return (
                   <article
                     key={it.id}
@@ -180,9 +176,8 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                         <LikeButton
                           targetType="news_item"
                           targetId={it.id}
-                          initialLiked={liked}
                           likeCount={likes}
-                          isLoggedIn={!!currentUserId}
+                          isLoggedIn
                           size="sm"
                           showCount
                           variant="ghost"
@@ -190,9 +185,8 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                         <SaveButton
                           targetType="news_item"
                           targetId={it.id}
-                          initialSaved={saved}
                           saveCount={saves}
-                          isLoggedIn={!!currentUserId}
+                          isLoggedIn
                           size="sm"
                           showCount
                           variant="ghost"
