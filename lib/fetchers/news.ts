@@ -1,9 +1,11 @@
 /**
  * 从 aihot 公开 API 拉取 AI 资讯 → upsert 到 news_items 表
  * 每 30 分钟由 Vercel Cron 调用
+ * 附:对新入库条目抓 OG 封面图(存 site_settings KV,失败静默)
  */
 import { db, newsItems } from '@/db';
-import { sql } from 'drizzle-orm';
+import { sql, inArray } from 'drizzle-orm';
+import { fetchOgImages } from '@/lib/fetchers/og-image';
 
 const AIHOT_ITEMS = 'https://aihot.virxact.com/api/public/items';
 
@@ -77,6 +79,12 @@ export async function fetchAndStoreNews(target = 200) {
     fetchedAt: new Date(),
   }));
 
+  // 识别新条目(封面对象只给新条目,避免重复抓)
+  const ids = rows.map((r) => r.id);
+  const existingRows = await db.select({ id: newsItems.id }).from(newsItems).where(inArray(newsItems.id, ids));
+  const existing = new Set(existingRows.map((r) => r.id));
+  const fresh = rows.filter((r) => !existing.has(r.id) && r.url);
+
   // Upsert:主键冲突时更新可变字段
   await db
     .insert(newsItems)
@@ -91,5 +99,15 @@ export async function fetchAndStoreNews(target = 200) {
       },
     });
 
-  return { total: rows.length };
+  // 新条目抓封面图(并发 4 · 单条 4s 超时 · 最多 12 条/run)· 失败静默
+  let covers = 0;
+  if (fresh.length > 0) {
+    try {
+      covers = await fetchOgImages(fresh.map((r) => ({ id: r.id, url: r.url! })));
+    } catch {
+      covers = 0;
+    }
+  }
+
+  return { total: rows.length, inserted: fresh.length, covers };
 }

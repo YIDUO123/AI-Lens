@@ -95,6 +95,22 @@ export function NewsSidebarClient({
               🕐 AI 资讯流
             </Link>
           </li>
+          <li>
+            <Link
+              href="/topics"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-ink-soft hover:bg-bg-alt hover:text-ink transition"
+            >
+              🏷️ 主题聚合
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/hot"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-ink-soft hover:bg-bg-alt hover:text-ink transition"
+            >
+              🔥 热点榜
+            </Link>
+          </li>
         </ul>
       </div>
 

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { db, articles, teardowns, timelineVersions } from '@/db';
+import { TOPICS } from '@/lib/content/topics';
 
 /**
  * 动态 sitemap
@@ -16,9 +17,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: SITE, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
     { url: `${SITE}/news`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${SITE}/daily`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${SITE}/hot`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.8 },
+    { url: `${SITE}/topics`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
+    ...TOPICS.map((t) => ({ url: `${SITE}/topics/${t.slug}`, lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.7 })),
     { url: `${SITE}/teardowns`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${SITE}/timeline`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${SITE}/insights`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${SITE}/leaderboard`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.5 },
+    { url: `${SITE}/agent`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${SITE}/changelog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.4 },
     { url: `${SITE}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE}/support`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
   ];

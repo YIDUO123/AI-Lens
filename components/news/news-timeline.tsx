@@ -8,6 +8,7 @@ import { LikeButton, SaveButton } from '@/components/interactions/reaction-butto
 import { FileSearch, ArrowUpRight } from 'lucide-react';
 import { DeepAnalysis } from '@/components/digest/deep-analysis';
 import { ReadMarker, ClearReadButton } from '@/components/news/read-marker';
+import { getOgImages } from '@/lib/fetchers/og-image';
 
 const PM_RULES = [
   { kw: ['agent', 'agents', '智能体', 'browser use', 'computer use'], insight: 'Agent 是当下最卷的赛道。核心问题:通用能力和垂直场景的平衡。' },
@@ -104,9 +105,10 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const currentUserId = session?.user?.id || null;
   const ids = filtered.map((n) => n.id);
-  const [counts, userState] = await Promise.all([
+  const [counts, userState, ogImages] = await Promise.all([
     getInteractionCountsBatch('news_item', ids),
     currentUserId ? getUserInteractions(currentUserId, 'news_item', ids) : Promise.resolve({ likedIds: new Set<string>(), savedIds: new Set<string>() }),
+    getOgImages(ids),
   ]);
 
   const grouped = groupByDate(filtered);
@@ -198,13 +200,22 @@ export async function NewsTimeline({ activeCat }: { activeCat: string }) {
                       </div>
                     </div>
 
-                    <div
-                      className={`flex flex-col items-center justify-center w-11 h-11 rounded-full border-2 border-ink text-sm font-black font-serif leading-none ${
+                    <div className="flex items-center gap-2">
+                      {ogImages.get(it.id) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={ogImages.get(it.id)}
+                          alt=""
+                          loading="lazy"
+                          className="hidden sm:block w-16 h-12 object-cover rounded-lg border-2 border-ink flex-shrink-0"
+                        />
+                      )}
+                      <div className={`flex flex-col items-center justify-center w-11 h-11 rounded-full border-2 border-ink text-sm font-black font-serif leading-none ${
                         isHot ? 'bg-coral text-white' : 'bg-bg-alt text-ink'
-                      }`}
-                    >
-                      {it.score || '—'}
-                      <span className="text-[7px] font-bold tracking-wide mt-0.5 opacity-70 font-sans">SCORE</span>
+                      }`}>
+                        {it.score || '—'}
+                        <span className="text-[7px] font-bold tracking-wide mt-0.5 opacity-70 font-sans">SCORE</span>
+                      </div>
                     </div>
                   </article>
                 );

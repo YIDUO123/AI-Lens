@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { db, newsItems } from '@/db';
 import { eq } from 'drizzle-orm';
 import { getNewsCard } from '@/lib/ai/news-card';
+import { getOgImages } from '@/lib/fetchers/og-image';
 import { getNewsFeedbackCounts } from '@/lib/actions/news-feedback';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -27,7 +28,8 @@ export default async function NewsCardPage({ params }: { params: Promise<{ id: s
   if (!item) notFound();
 
   // 只读缓存,不在这里阻塞生成:命中就 server 渲染(快 + SEO),没命中交给 CardBody 客户端异步生成
-  const card = await getNewsCard(id);
+  const [card, ogImages] = await Promise.all([getNewsCard(id), getOgImages([id])]);
+  const ogImage = ogImages.get(id);
 
   const session = await auth.api.getSession({ headers: await headers() });
   const fb = await getNewsFeedbackCounts(id, session?.user?.id || null);
@@ -47,6 +49,16 @@ export default async function NewsCardPage({ params }: { params: Promise<{ id: s
         <h1 className="text-3xl md:text-4xl font-black tracking-[-0.02em] leading-[1.2] mb-4">{item.title}</h1>
 
         {item.summary && <p className="text-base text-ink-soft leading-relaxed mb-4">{item.summary}</p>}
+
+        {ogImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={ogImage}
+            alt=""
+            className="w-full max-h-72 object-cover rounded-xl border-2 border-ink mb-5"
+            loading="lazy"
+          />
+        )}
 
         {/* 六维:缓存命中 server 渲染;否则客户端异步生成(首屏不阻塞) */}
         {card ? <NewsDims tldr={card.tldr} dims={card.dims} /> : <CardBody newsId={id} fallbackSummary={item.summary} />}
