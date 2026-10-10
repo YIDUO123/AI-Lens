@@ -10,6 +10,7 @@ import { sql, and, gte, desc } from 'drizzle-orm';
 import { TOPICS, getTopic } from '@/lib/content/topics';
 import { dedupeByTitle } from '@/lib/fetchers/daily-digest';
 import { ArrowLeft } from 'lucide-react';
+import { ModuleSwitcher } from '@/components/news/module-switcher';
 
 export const runtime = 'nodejs';
 export const revalidate = 900;
@@ -56,9 +57,11 @@ export default async function TopicPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="container max-w-4xl py-10 pb-24">
-      <Link href="/topics" className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-soft hover:text-coral mb-8">
+      <Link href="/topics" className="inline-flex items-center gap-1.5 text-sm font-bold text-ink-soft hover:text-coral mb-4">
         <ArrowLeft className="w-4 h-4" /> 全部主题
       </Link>
+
+      <ModuleSwitcher current="topics" />
 
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-3">

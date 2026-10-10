@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { db, newsItems } from '@/db';
 import { sql, and, gte } from 'drizzle-orm';
 import { TOPICS } from '@/lib/content/topics';
+import { ModuleSwitcher } from '@/components/news/module-switcher';
 
 export const runtime = 'nodejs';
 export const revalidate = 900;
@@ -33,6 +34,8 @@ export default async function TopicsPage() {
 
   return (
     <div className="container max-w-5xl py-12 pb-24">
+      <ModuleSwitcher current="topics" />
+
       <div className="mb-10">
         <div className="text-[10px] font-black tracking-widest uppercase text-coral mb-2">Topics · 主题聚合</div>
         <h1 className="text-4xl md:text-5xl font-black tracking-[-0.03em] leading-tight mb-4">

@@ -8,6 +8,7 @@ import { db, newsItems } from '@/db';
 import { gte, desc } from 'drizzle-orm';
 import { clusterEvents, trendLabel, type EventCluster } from '@/lib/fetchers/events';
 import { Flame, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ModuleSwitcher } from '@/components/news/module-switcher';
 
 export const runtime = 'nodejs';
 export const revalidate = 900;
@@ -46,6 +47,8 @@ export default async function HotPage() {
 
   return (
     <div className="container max-w-5xl py-12 pb-24">
+      <ModuleSwitcher current="hot" />
+
       {/* 页头 */}
       <div className="flex justify-between items-end flex-wrap gap-4 mb-10">
         <div>
