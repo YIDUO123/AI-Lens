@@ -275,6 +275,7 @@ async function TodayDigest() {
               <h2 className="text-2xl md:text-3xl font-black tracking-[-0.02em]">过去 24 小时,最值得看的 <em className="accent">5 条</em></h2>
             </div>
             <div className="flex items-center gap-4 text-sm font-bold text-ink-soft">
+              <Link href="/hot" className="link-underline hover:text-ink transition-colors">热点榜</Link>
               <Link href="/daily" className="link-underline hover:text-ink transition-colors">往期日报</Link>
               <Link href="/news" className="link-underline hover:text-ink transition-colors">看全部 →</Link>
             </div>
