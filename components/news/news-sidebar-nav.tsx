@@ -72,46 +72,28 @@ export function NewsSidebarClient({
 
   return (
     <div className="space-y-8">
-      {/* 动态模块 · 移动端隐藏(页内锚点,手机上价值低) */}
+      {/* 动态模块 · 横向 chips(页内/跨页切换,与下方竖排分类形成视觉区分) */}
       <div className="hidden lg:block">
-        <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <div className="mb-2.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
           动态模块
           <span className="flex-1 h-px bg-line" />
         </div>
-        <ul className="space-y-1">
-          <li>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { href: '#report-container', icon: '📅', label: '报告 · 速览' },
+            { href: '#timeline', icon: '🕐', label: 'AI 资讯流' },
+            { href: '/topics', icon: '🏷️', label: '主题聚合' },
+            { href: '/hot', icon: '🔥', label: '热点榜' },
+          ].map((l) => (
             <Link
-              href="#report-container"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-ink-soft hover:bg-bg-alt hover:text-ink transition"
+              key={l.href}
+              href={l.href}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border-[1.5px] border-line bg-cream text-[11px] font-semibold text-ink-soft hover:border-ink hover:text-ink hover:-translate-y-px transition whitespace-nowrap"
             >
-              📅 报告 · 速览
+              <span>{l.icon}</span> {l.label}
             </Link>
-          </li>
-          <li>
-            <Link
-              href="#timeline"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-ink-soft hover:bg-bg-alt hover:text-ink transition"
-            >
-              🕐 AI 资讯流
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/topics"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-ink-soft hover:bg-bg-alt hover:text-ink transition"
-            >
-              🏷️ 主题聚合
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/hot"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-ink-soft hover:bg-bg-alt hover:text-ink transition"
-            >
-              🔥 热点榜
-            </Link>
-          </li>
-        </ul>
+          ))}
+        </div>
       </div>
 
       {/* 资讯分类 · 桌面竖排列表 / 移动端横向滑动 chips */}

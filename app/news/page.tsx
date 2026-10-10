@@ -38,12 +38,14 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
           <h1 className="text-5xl md:text-6xl font-black tracking-[-0.03em] leading-[1.05] mb-4">
             全球 <em className="accent">AI 资讯</em>
           </h1>
-          <p className="max-w-2xl text-ink-soft leading-relaxed mb-6">
-            每日追踪 200+ 条 AI 动态,来自 OpenAI、Anthropic、HuggingFace、Hacker News 等 30+ 公开信源。
-            点开任意一条 → <b className="text-ink">文章概览 + STAR + 行动启示</b> 六维拆解,5 分钟读懂今天的 AI。
+          <p className="max-w-2xl text-ink-soft leading-relaxed mb-2">
+            每 30 分钟聚合全球 30+ 公开信源,累计收录 <b className="text-ink">6935+</b> 条 AI 动态。
+            点开任意一条 → <b className="text-ink">文章概览 + STAR + 行动启示</b> 六维拆解,2 分钟读懂一条。
+          </p>
+          <p className="text-xs text-muted-foreground mb-6">
+            邮箱 / 微信 / 飞书 每天定时推送 10 条精选 · 可选模块与模型 · 一键退订
           </p>
           <div className="flex flex-wrap items-center gap-3 md:justify-end">
-            <span className="text-xs text-muted-foreground w-full sm:w-auto sm:order-first">邮箱 / 微信 / 飞书 · 每天定时 10 条精选 · 可选模块与模型</span>
             <Link
               href="/me"
               className="press inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-coral to-gold text-white border-2 border-ink rounded-xl text-base font-black tracking-wide shadow-brutal hover:-translate-y-0.5 hover:shadow-brutal-lg transition-all"

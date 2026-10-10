@@ -85,7 +85,7 @@ export default async function NewsCardPage({ params }: { params: Promise<{ id: s
         </div>
 
         <div className="mt-6 text-xs text-muted-foreground">
-          六维拆解由 AI Lens 自动生成 · 帮你 5 分钟读懂一条资讯 · 仅供参考,以原文为准
+          六维拆解由 AI Lens 自动生成 · 帮你 2 分钟读懂一条资讯 · 仅供参考,以原文为准
         </div>
       </article>
     </div>
