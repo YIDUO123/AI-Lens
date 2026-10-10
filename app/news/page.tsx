@@ -42,7 +42,8 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
             每日追踪 200+ 条 AI 动态,来自 OpenAI、Anthropic、HuggingFace、Hacker News 等 30+ 公开信源。
             点开任意一条 → <b className="text-ink">文章概览 + STAR + 行动启示</b> 六维拆解,5 分钟读懂今天的 AI。
           </p>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 md:justify-end">
+            <span className="text-xs text-muted-foreground w-full sm:w-auto sm:order-first">邮箱 / 微信 / 飞书 · 每天定时 10 条精选 · 可选模块与模型</span>
             <Link
               href="/me"
               className="press inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-coral to-gold text-white border-2 border-ink rounded-xl text-base font-black tracking-wide shadow-brutal hover:-translate-y-0.5 hover:shadow-brutal-lg transition-all"
@@ -50,7 +51,6 @@ export default async function NewsPage({ searchParams }: { searchParams: Promise
               <Mail className="w-5 h-5" />
               订阅每日精编
             </Link>
-            <span className="text-xs text-muted-foreground">邮箱 / 微信 / 飞书 · 每天定时 10 条精选 · 可选模块与模型</span>
           </div>
         </div>
       </section>
